@@ -731,6 +731,56 @@ a {
     }
 }
 
+/* Availability Section */
+.availability-card {
+    background: var(--bg-white);
+    padding: 2.5rem;
+    border-radius: 15px;
+    box-shadow: var(--shadow-sm);
+    border-top: 4px solid var(--primary);
+    transition: var(--transition);
+    border-bottom: 1px solid rgba(0,0,0,0.02);
+}
+
+.availability-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--primary-dark);
+}
+
+.availability-card h4 {
+    font-family: var(--font-sans);
+    font-size: 1.4rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    padding-bottom: 1rem;
+}
+
+.availability-list {
+    list-style: none;
+}
+
+.availability-list li {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.8rem 0;
+    border-bottom: 1px dashed rgba(0,0,0,0.08);
+    font-size: 1.05rem;
+}
+
+.availability-list li:last-child {
+    border-bottom: none;
+}
+
+.availability-list li span {
+    color: var(--text-light);
+    font-weight: 500;
+}
+
+.availability-list li strong {
+    color: var(--primary-dark);
+}
+
 /* Policies Section */
 .policy-card {
     background: var(--bg-white);
