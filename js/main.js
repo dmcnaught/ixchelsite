@@ -1,0 +1,67 @@
+// Navigation Bar Scroll Effect
+const navbar = document.getElementById('navbar');
+
+window.addEventListener('scroll', () => {
+    if (window.scrollY > 50) {
+        navbar.classList.add('scrolled');
+    } else {
+        navbar.classList.remove('scrolled');
+    }
+});
+
+// Mobile Menu Toggle
+const hamburger = document.querySelector('.hamburger');
+const navLinks = document.querySelector('.nav-links');
+
+hamburger.addEventListener('click', () => {
+    hamburger.classList.toggle('active');
+    navLinks.classList.toggle('active');
+    
+    // Toggle dark styling to the navbar when open on mobile so it's readable if at top
+    if (window.scrollY <= 50) {
+        navbar.classList.toggle('scrolled');
+    }
+});
+
+// Close mobile menu when a link is clicked
+document.querySelectorAll('.nav-links li a').forEach(link => {
+    link.addEventListener('click', () => {
+        hamburger.classList.remove('active');
+        navLinks.classList.remove('active');
+        if (window.scrollY <= 50) {
+            navbar.classList.remove('scrolled');
+        }
+    });
+});
+
+// Intersection Observer for Scroll Animations
+const revealElements = document.querySelectorAll('.reveal');
+
+const revealCallback = (entries, observer) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.classList.add('active');
+            // Optional: observer.unobserve(entry.target) if you only want it to animate once
+        }
+    });
+};
+
+const revealOptions = {
+    root: null,
+    rootMargin: '0px',
+    threshold: 0.15 // Triggers when 15% of the element is visible
+};
+
+const revealObserver = new IntersectionObserver(revealCallback, revealOptions);
+
+revealElements.forEach(el => {
+    revealObserver.observe(el);
+});
+
+// Trigger reveal immediately for elements already in viewport on load
+document.addEventListener("DOMContentLoaded", () => {
+    setTimeout(() => {
+        // Hero content should appear instantly without waiting for scroll
+        document.querySelector('.hero-content.reveal').classList.add('active');
+    }, 100);
+});
