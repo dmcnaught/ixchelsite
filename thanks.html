@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thank You - Ixchel Beach Hotel Suites 603 & 604</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+    <style>
+        .thanks-section {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://lh3.googleusercontent.com/pw/AP1GczM5UVWzM3OXt8DGeiPOU4u4-1w0fiDc8LPHmJA0E-w8rLQlI45kRCNhM8eSaF_cQD8AYyOojfudUKnf6LyDBZxB4Ju7tMuVoB7vFcewKeYPzYexOeT1ubcm6_BpleNslJ3yXEIIY_QpG8AUf7GW6pyqrw=s0');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            padding: 2rem;
+        }
+        .thanks-content {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            padding: 4rem;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.2);
+            max-width: 600px;
+        }
+        .thanks-content h1 {
+            font-family: var(--font-serif);
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+        }
+        .thanks-content p {
+            font-size: 1.2rem;
+            margin-bottom: 2.5rem;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <section class="thanks-section">
+        <div class="thanks-content reveal">
+            <h1>Message Received</h1>
+            <p>Thank you for reaching out. We have received your inquiry for Suites 603 & 604 and will get back to you as soon as possible.</p>
+            <a href="index.html" class="btn-primary btn-large">Return to Website</a>
+        </div>
+    </section>
+
+    <script>
+        // Simple reveal animation
+        window.addEventListener('load', () => {
+            document.querySelector('.reveal').style.opacity = '1';
+            document.querySelector('.reveal').style.transform = 'translateY(0)';
+        });
+    </script>
+</body>
+</html>
