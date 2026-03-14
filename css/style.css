@@ -899,6 +899,9 @@ a {
     .sunset-divider {
         aspect-ratio: auto;
         min-height: 400px;
+        width: 100%;
+        max-width: 100vw;
+        overflow: hidden;
     }
 }
 
