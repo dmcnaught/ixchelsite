@@ -1,4 +1,8 @@
 /* variables.css inside style.css */
+html, body {
+    overflow-x: hidden;
+}
+
 :root {
     /* Color Palette */
     --primary: #008B8B;      /* Deep Cyan/Teal for ocean feel */
