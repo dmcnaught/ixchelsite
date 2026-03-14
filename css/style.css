@@ -195,29 +195,30 @@ a {
 
 .brand-group {
     display: flex;
+    flex-direction: row; /* Force horizontal even on mobile */
     align-items: center;
-    gap: 1.5rem;
+    gap: 1.2rem;
 }
 
 .logo {
     font-family: var(--font-serif);
-    font-size: 2rem;
+    font-size: clamp(1.2rem, 4vw, 1.8rem);
     font-weight: 700;
     color: var(--white);
     transition: var(--transition);
     text-decoration: none;
+    white-space: nowrap;
 }
 
 .logo span {
     font-family: var(--font-sans);
     font-weight: 300;
-    font-size: 1.2rem;
+    font-size: 0.6em;
     opacity: 0.8;
 }
 
-
 .brand-icon {
-    height: 48px;
+    height: 42px;
     width: auto;
     transition: var(--transition);
     filter: brightness(0) invert(1);
@@ -535,42 +536,49 @@ a {
 }
 
 /* Sunset Divider */
+/* Sunset Divider */
 .sunset-divider {
-    padding: 100px 0;
-    background: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.4)), url('../images/sunset.jpg');
+    padding: 120px 0;
+    background: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)), url('../images/sunset.jpg');
     background-size: cover;
     background-position: center;
-    background-attachment: fixed;
+    background-attachment: scroll; /* Scroll is safer for most devices than fixed */
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
     color: var(--white);
-    min-height: 450px;
+    min-height: 500px;
 }
 
 .divider-content {
-    max-width: 900px;
-    padding: 0 2rem;
-    animation: fadeIn 1s ease-out;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: 4rem 3rem;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    max-width: 800px;
+    width: 90%;
 }
 
 .divider-content h2 {
     font-family: var(--font-serif);
-    font-size: clamp(2.5rem, 6vw, 4.5rem);
-    margin-bottom: 2rem;
-    text-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    font-size: clamp(2.2rem, 5vw, 3.8rem);
+    margin-bottom: 1.5rem;
+    text-shadow: 0 4px 15px rgba(0,0,0,0.3);
     line-height: 1.1;
     font-weight: 700;
 }
 
 .divider-content p {
-    font-size: clamp(1rem, 2.5vw, 1.4rem);
+    font-size: clamp(0.9rem, 2vw, 1.2rem);
     letter-spacing: 5px;
     text-transform: uppercase;
     font-weight: 300;
     opacity: 0.95;
 }
+
 
 
 
