@@ -193,24 +193,46 @@ a {
     align-items: center;
 }
 
-.logo {
+.logo-link {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    text-decoration: none;
+}
+
+.brand-logo {
+    height: 50px;
+    width: auto;
+    transition: var(--transition);
+    filter: brightness(0) invert(1);
+}
+
+.logo-text {
     font-family: var(--font-serif);
     font-size: 1.5rem;
     font-weight: 700;
     color: var(--white);
     transition: var(--transition);
+    line-height: 1;
 }
 
-.logo span {
+.logo-text span {
     font-family: var(--font-sans);
     font-weight: 300;
-    font-size: 1.2rem;
+    font-size: 1rem;
     opacity: 0.8;
 }
 
-.navbar.scrolled .logo {
+.navbar.scrolled .brand-logo {
+    height: 40px;
+    filter: none;
+}
+
+.navbar.scrolled .logo-text {
     color: var(--primary);
 }
+
+
 
 .nav-links {
     display: flex;
@@ -300,10 +322,36 @@ a {
     color: var(--white);
 }
 
-.fb-badge {
+.awards-badges {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 2rem;
     margin-bottom: 2rem;
-    display: inline-block;
 }
+
+.fb-badge {
+    margin-bottom: 0; /* Handled by container gap */
+}
+
+.tripadvisor-badge {
+    display: flex;
+    align-items: center;
+}
+
+.award-img {
+    height: 80px;
+    width: auto;
+    border-radius: 50%;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+}
+
+.award-img:hover {
+    transform: scale(1.05);
+    box-shadow: var(--shadow-md);
+}
+
 
 .fb-badge a {
     display: inline-flex;
@@ -481,6 +529,22 @@ a {
 }
 
 /* Amenities Section */
+#amenities {
+    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('../images/sunset_bg.webp');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    color: var(--white);
+}
+
+#amenities .section-title {
+    color: var(--white);
+}
+
+#amenities .section-subtitle {
+    color: var(--primary-light);
+}
+
 .amenities-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -488,14 +552,18 @@ a {
 }
 
 .amenity-item {
-    background: var(--bg-white);
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     padding: 3rem 2rem;
     border-radius: 15px;
     text-align: center;
     box-shadow: var(--shadow-sm);
     transition: var(--transition);
-    border: 1px solid rgba(0,0,0,0.02);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--white);
 }
+
 
 .amenity-item:hover {
     transform: translateY(-10px);
@@ -515,8 +583,9 @@ a {
 }
 
 .amenity-item p {
-    color: var(--text-light);
+    color: rgba(255, 255, 255, 0.8);
 }
+
 
 /* Gallery Section */
 .gallery-grid {
