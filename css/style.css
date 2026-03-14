@@ -196,41 +196,50 @@ a {
 .logo-link {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 1.2rem;
     text-decoration: none;
 }
 
 .brand-logo {
-    height: 50px;
+    height: 45px;
     width: auto;
     transition: var(--transition);
     filter: brightness(0) invert(1);
+    border-radius: 4px;
 }
 
 .logo-text {
     font-family: var(--font-serif);
-    font-size: 1.5rem;
+    font-size: 1.4rem;
     font-weight: 700;
     color: var(--white);
     transition: var(--transition);
     line-height: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 .logo-text span {
     font-family: var(--font-sans);
     font-weight: 300;
-    font-size: 1rem;
+    font-size: 0.85rem;
     opacity: 0.8;
 }
 
 .navbar.scrolled .brand-logo {
-    height: 40px;
+    height: 38px;
     filter: none;
 }
 
 .navbar.scrolled .logo-text {
-    color: var(--primary);
+    color: var(--text-dark);
 }
+
+.navbar.scrolled .logo-text span {
+    color: var(--primary);
+    opacity: 1;
+}
+
 
 
 
@@ -528,23 +537,34 @@ a {
     font-weight: 300;
 }
 
-/* Amenities Section */
-#amenities {
-    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('../images/sunset_bg.webp');
+/* Sunset Divider */
+.sunset-divider {
+    height: 400px;
+    background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('../images/sunset.jpg');
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
     color: var(--white);
 }
 
-#amenities .section-title {
-    color: var(--white);
+.divider-content h2 {
+    font-family: var(--font-serif);
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    text-shadow: 0 4px 10px rgba(0,0,0,0.3);
 }
 
-#amenities .section-subtitle {
-    color: var(--primary-light);
+.divider-content p {
+    font-size: 1.2rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
 }
 
+/* Amenities Section */
 .amenities-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -552,23 +572,19 @@ a {
 }
 
 .amenity-item {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: var(--bg-light);
     padding: 3rem 2rem;
     border-radius: 15px;
     text-align: center;
     box-shadow: var(--shadow-sm);
     transition: var(--transition);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: var(--white);
+    border: 1px solid rgba(0,0,0,0.05);
 }
-
 
 .amenity-item:hover {
     transform: translateY(-10px);
     box-shadow: var(--shadow-md);
-    border-color: rgba(0, 139, 139, 0.1);
+    background: var(--white);
 }
 
 .amenity-item .icon {
@@ -579,12 +595,13 @@ a {
 .amenity-item h3 {
     font-size: 1.3rem;
     margin-bottom: 1rem;
-    font-family: var(--font-sans);
+    color: var(--text-dark);
 }
 
 .amenity-item p {
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--text-light);
 }
+
 
 
 /* Gallery Section */
