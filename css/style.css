@@ -646,14 +646,14 @@ a {
 .form-group input,
 .form-group textarea {
     width: 100%;
-    padding: 0.9rem 1.2rem;
+    padding: 1.2rem 1.5rem;
     border: 1.5px solid rgba(0,0,0,0.1);
-    border-radius: 8px;
+    border-radius: 10px;
     font-family: var(--font-sans);
-    font-size: 0.95rem;
+    font-size: 1.1rem;
     color: var(--text-dark);
     background: var(--bg-light);
-    transition: border-color 0.3s;
+    transition: all 0.3s ease;
     outline: none;
 }
 
