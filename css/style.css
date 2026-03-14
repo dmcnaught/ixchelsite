@@ -535,7 +535,7 @@ a {
 
 /* Sunset Divider */
 .sunset-divider {
-    min-height: 750px;
+    min-height: 500px;
     background-image: linear-gradient(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05)), url('../images/sunset.jpg');
     background-size: cover;
     background-position: center center;
@@ -547,9 +547,14 @@ a {
     text-align: center;
     color: #fff;
     padding: 80px 2rem;
-    aspect-ratio: 4/3;
-    max-width: 100%;
     box-sizing: border-box;
+    width: 100%;
+}
+
+@media (min-width: 992px) {
+    .sunset-divider {
+        aspect-ratio: 4/3;
+    }
 }
 
 .divider-content {
