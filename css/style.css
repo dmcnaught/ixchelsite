@@ -535,7 +535,7 @@ a {
 
 /* Sunset Divider */
 .sunset-divider {
-    min-height: 680px;
+    min-height: 750px;
     background-image: linear-gradient(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05)), url('../images/sunset.jpg');
     background-size: cover;
     background-position: center center;
