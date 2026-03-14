@@ -219,7 +219,7 @@ a {
     height: 36px;
     width: auto;
     transition: var(--transition);
-    filter: brightness(0) invert(1);
+    filter: none;
     flex-shrink: 0;
 }
 
@@ -535,7 +535,7 @@ a {
 /* Sunset Divider */
 .sunset-divider {
     min-height: 450px;
-    background-image: linear-gradient(rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.35)), url('../images/sunset.jpg');
+    background-image: linear-gradient(rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.15)), url('../images/sunset.jpg');
     background-size: cover;
     background-position: center center;
     display: flex;
