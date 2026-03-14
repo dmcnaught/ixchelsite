@@ -193,14 +193,29 @@ a {
     align-items: center;
 }
 
-.logo-link {
+.brand-group {
     display: flex;
     align-items: center;
-    gap: 1.2rem;
+    gap: 1.5rem;
+}
+
+.logo {
+    font-family: var(--font-serif);
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--white);
+    transition: var(--transition);
     text-decoration: none;
 }
 
-.brand-logo {
+.logo span {
+    font-family: var(--font-sans);
+    font-weight: 300;
+    font-size: 1.1rem;
+    opacity: 0.8;
+}
+
+.brand-icon {
     height: 45px;
     width: auto;
     transition: var(--transition);
@@ -208,37 +223,15 @@ a {
     border-radius: 4px;
 }
 
-.logo-text {
-    font-family: var(--font-serif);
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: var(--white);
-    transition: var(--transition);
-    line-height: 1;
-    display: flex;
-    flex-direction: column;
+.navbar.scrolled .logo {
+    color: var(--primary);
 }
 
-.logo-text span {
-    font-family: var(--font-sans);
-    font-weight: 300;
-    font-size: 0.85rem;
-    opacity: 0.8;
-}
-
-.navbar.scrolled .brand-logo {
+.navbar.scrolled .brand-icon {
     height: 38px;
     filter: none;
 }
 
-.navbar.scrolled .logo-text {
-    color: var(--text-dark);
-}
-
-.navbar.scrolled .logo-text span {
-    color: var(--primary);
-    opacity: 1;
-}
 
 
 
@@ -540,7 +533,7 @@ a {
 /* Sunset Divider */
 .sunset-divider {
     height: 400px;
-    background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('../images/sunset.jpg');
+    background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('images/sunset.jpg');
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
@@ -550,6 +543,7 @@ a {
     text-align: center;
     color: var(--white);
 }
+
 
 .divider-content h2 {
     font-family: var(--font-serif);
