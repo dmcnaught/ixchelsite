@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Opening Facebook Messenger - Ixchel Beach Hotel Suites 603 & 604</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+    <style>
+        .redirect-section {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://lh3.googleusercontent.com/pw/AP1GczPI4AY3xLmbQLgW7MeEcIx35pYPcePWwSyDMVv0nOdE59mD6UP-Xfj_MA6KNUxPHgEOXj8cztwLk2H_GdrKQRZcKYOLH1Vn7iZvM20yEILDDUkdOIBl4d-RlFYO3R61nkpSik90_kMPTWxM-aE1lI1Tew=w2592-h1944-s-no-gm');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            padding: 2rem;
+        }
+        .redirect-content {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            padding: 4rem;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.2);
+            max-width: 600px;
+        }
+        .redirect-content h1 {
+            font-family: var(--font-serif);
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        .loader {
+            width: 48px;
+            height: 48px;
+            border: 5px solid #FFF;
+            border-bottom-color: var(--primary);
+            border-radius: 50%;
+            display: inline-block;
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+            margin-bottom: 2rem;
+        }
+        @keyframes rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .redirect-content p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <section class="redirect-section">
+        <div class="redirect-content">
+            <span class="loader"></span>
+            <h1>Connecting to Facebook</h1>
+            <p>One moment while we open Facebook Messenger for you...</p>
+        </div>
+    </section>
+
+    <script>
+        // Redirect after a short delay to allow tracking pixel to fire
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                window.location.href = "https://www.facebook.com/profile.php?id=100083058382774";
+            }, 1000); 
+        });
+    </script>
+</body>
+</html>
