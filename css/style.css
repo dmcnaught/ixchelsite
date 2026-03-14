@@ -539,12 +539,15 @@ a {
     background-image: linear-gradient(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05)), url('../images/sunset.jpg');
     background-size: cover;
     background-position: center center;
+    background-repeat: no-repeat;
+    background-color: #1a2a3a;
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
     color: #fff;
     padding: 80px 2rem;
+    aspect-ratio: 4/3;
 }
 
 .divider-content {
