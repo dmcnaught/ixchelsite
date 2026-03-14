@@ -883,6 +883,23 @@ a {
     .item-large, .item-wide {
         grid-column: span 1;
     }
+
+    .brand-icon {
+        height: 24px;
+    }
+
+    .award-img {
+        height: 50px;
+    }
+
+    .awards-badges {
+        gap: 0.5rem;
+    }
+
+    .sunset-divider {
+        aspect-ratio: auto;
+        min-height: 400px;
+    }
 }
 
 /* Availability Section */
