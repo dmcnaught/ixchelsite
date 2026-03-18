@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://ixchel603and604.com/sitemap.xml
