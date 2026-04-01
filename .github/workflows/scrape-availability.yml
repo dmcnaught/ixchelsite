@@ -1,0 +1,57 @@
+name: Scrape Availability
+
+on:
+  schedule:
+    # Run daily at 6:00 AM UTC (midnight CST)
+    - cron: '0 6 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: _scraper
+        run: npm install
+
+      - name: Install Playwright browsers
+        working-directory: _scraper
+        run: npx playwright install chromium --with-deps
+
+      - name: Run scraper
+        working-directory: _scraper
+        env:
+          IXCHEL_EMAIL: ${{ secrets.IXCHEL_EMAIL }}
+          IXCHEL_PASSWORD: ${{ secrets.IXCHEL_PASSWORD }}
+        run: node scrape-calendar.js
+
+      - name: Check for changes
+        id: changes
+        run: |
+          git diff --quiet js/availability.json || echo "changed=true" >> $GITHUB_OUTPUT
+
+      - name: Commit and push
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git add js/availability.json
+          git commit -m "Auto-update availability data [$(date +%Y-%m-%d)]"
+          git push
+
+      - name: Upload debug screenshot on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-screenshot
+          path: _scraper/debug.png
+          retention-days: 3
