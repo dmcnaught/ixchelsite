@@ -269,23 +269,48 @@
             <div class="section-header reveal">
                 <h3 class="section-subtitle">Plan Your Stay</h3>
                 <h2 class="section-title">Current Availability</h2>
-                <p style="color: var(--text-light); max-width: 650px; margin: 0 auto;">See at a glance when our rooms are available.<br>Last updated: <span id="avail-last-updated">loading...</span></p>
+                <p>Last updated: March 27th, 2026</p>
+                <p style="font-size: 0.95rem; margin-top: 1rem; color: var(--text-light); max-width: 650px; margin-left: auto; margin-right: auto;">
+                    <em>(<strong>+</strong> means open until month end, <strong>-</strong> means open from month start.)</em><br>
+                    If you know the dates you want to visit, it's always worth checking if we can accommodate you by moving existing reservations to different units!
+                </p>
             </div>
-
-            <div class="avail-legend reveal">
-                <div class="avail-legend-item"><span class="avail-dot dot-free"></span><span class="avail-dot dot-free"></span> Both rooms available</div>
-                <div class="avail-legend-item"><span class="avail-dot dot-free"></span><span class="avail-dot dot-booked"></span> One room available</div>
-                <div class="avail-legend-item"><span class="avail-dot dot-booked"></span><span class="avail-dot dot-booked"></span> Fully booked</div>
-                <div class="avail-legend-item"><span class="avail-dot dot-603"></span> = Room 603 &nbsp; <span class="avail-dot dot-604"></span> = Room 604</div>
+            
+            <div class="grid-2">
+                <div class="availability-card reveal">
+                    <h4>Room 2603 <span style="font-weight: 400; font-size: 0.9rem; color: var(--text-light); display: block; margin-top: 0.2rem;">(Standard Room with 2 Double beds)</span></h4>
+                    <ul class="availability-list">
+                        <li><span>March 2026</span> <strong>27-29,31</strong></li>
+                        <li><span>April 2026</span> <strong>10+</strong></li>
+                        <li><span>May</span> <strong>-6, 24-29</strong></li>
+                        <li><span>June</span> <strong>3-6, 9-22, 29+</strong></li>
+                        <li><span>July</span> <strong>-2, 10-12, 18-23, 27</strong></li>
+                        <li><span>August</span> <strong>5+</strong></li>
+                        <li><span>September</span> <strong>Open</strong></li>
+                        <li><span>October</span> <strong>-29</strong></li>
+                        <li><span>November</span> <strong>3+</strong></li>
+                        <li><span>December</span> <strong>-23</strong></li>
+                        <li><span>January</span> <strong>3+</strong></li>
+                    </ul>
+                </div>
+                
+                <div class="availability-card reveal delay-1">
+                    <h4>Room 2604 <span style="font-weight: 400; font-size: 0.9rem; color: var(--text-light); display: block; margin-top: 0.2rem;">(King Suite)</span></h4>
+                    <ul class="availability-list">
+                        <li><span>March 2026</span> <strong>31</strong></li>
+                        <li><span>April 2026</span> <strong>10-12, 24-29</strong></li>
+                        <li><span>May</span> <strong>10-12, 19-29</strong></li>
+                        <li><span>June</span> <strong>3-6, 9-20, 30+</strong></li>
+                        <li><span>July</span> <strong>-23, 27+</strong></li>
+                        <li><span>August</span> <strong>Open</strong></li>
+                        <li><span>September</span> <strong>Open</strong></li>
+                        <li><span>October</span> <strong>-30</strong></li>
+                        <li><span>November</span> <strong>4-13, 18-28</strong></li>
+                        <li><span>December</span> <strong>9-12, 19-23</strong></li>
+                        <li><span>January</span> <strong>3-9, 23+</strong></li>
+                    </ul>
+                </div>
             </div>
-
-            <div id="availability-calendars" class="avail-calendars reveal">
-                <!-- Rendered by calculator.js -->
-            </div>
-
-            <p class="reveal" style="text-align: center; margin-top: 2rem; color: var(--text-light); font-size: 0.95rem;">
-                If you see dates that are booked, it's always worth checking &mdash; we can sometimes accommodate you by moving existing reservations to different units!
-            </p>
         </div>
     </section>
 
@@ -295,7 +320,7 @@
             <div class="section-header reveal">
                 <h3 class="section-subtitle">Estimate Your Stay</h3>
                 <h2 class="section-title">Rate Calculator</h2>
-                <p style="color: var(--text-light); max-width: 650px; margin: 0 auto;">Select your dates and room type to get an estimated cost for your stay.<br>Rates are per night in USD.</p>
+                <p style="color: var(--text-light); max-width: 650px; margin: 0 auto;">Select your dates and room type to get an estimated cost for your stay. Rates are per night in USD.</p>
             </div>
 
             <div class="calculator-card reveal">
