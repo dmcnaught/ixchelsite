@@ -75,6 +75,7 @@
                 <li><a href="#gallery">Gallery</a></li>
                 <li><a href="#amenities">Amenities</a></li>
                 <li><a href="#availability">Availability</a></li>
+                <li><a href="#calculator">Rates</a></li>
                 <li><a href="messenger-redirect.html" target="_blank" rel="noopener noreferrer">Facebook</a></li>
                 <li><a href="https://maps.app.goo.gl/nnrn9pq7YKeQk98h7" target="_blank" rel="noopener noreferrer">Google</a></li>
                 <li><a href="#contact" class="btn-primary-small">Book Now</a></li>
@@ -313,6 +314,55 @@
         </div>
     </section>
 
+    <!-- Rate Calculator Section -->
+    <section class="calculator section" id="calculator">
+        <div class="container">
+            <div class="section-header reveal">
+                <h3 class="section-subtitle">Estimate Your Stay</h3>
+                <h2 class="section-title">Rate Calculator</h2>
+                <p style="color: var(--text-light); max-width: 650px; margin: 0 auto;">Select your dates and room type to get an estimated cost for your stay. Rates are per night in USD.</p>
+            </div>
+
+            <div class="calculator-card reveal">
+                <div class="calc-form-row">
+                    <div class="calc-field">
+                        <label for="calc-checkin">Check-in</label>
+                        <input type="date" id="calc-checkin">
+                    </div>
+                    <div class="calc-field">
+                        <label for="calc-checkout">Check-out</label>
+                        <input type="date" id="calc-checkout">
+                    </div>
+                    <div class="calc-field calc-field-room">
+                        <label for="calc-room">Room Type</label>
+                        <select id="calc-room">
+                            <optgroup label="Our Rooms &mdash; Specific Room Guaranteed">
+                                <option value="Standard Room">Room 603 &mdash; Standard Room</option>
+                                <option value="One Bedroom Suite">Room 604 &mdash; One Bedroom Suite</option>
+                                <option value="Two Bedroom Suite">Rooms 603 &amp; 604 &mdash; Two Bedroom Suite</option>
+                            </optgroup>
+                            <optgroup label="Other Room Types &mdash; General Reservation">
+                                <option value="One Bedroom Suite Beachfront">One Bedroom Suite Beachfront</option>
+                                <option value="One Bedroom Penthouse">One Bedroom Penthouse</option>
+                                <option value="One Bedroom Premium Penthouse">One Bedroom Premium Penthouse</option>
+                                <option value="Deluxe Two Bedroom Suite">Deluxe Two Bedroom Suite</option>
+                                <option value="Two Bedroom Suite Beachfront">Two Bedroom Suite Beachfront</option>
+                                <option value="Two Bedroom Penthouse">Two Bedroom Penthouse</option>
+                                <option value="Two Bedroom Premium Penthouse">Two Bedroom Premium Penthouse</option>
+                                <option value="Three Bedroom Penthouse">Three Bedroom Penthouse</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                </div>
+                <button type="button" id="calc-btn" class="btn-primary btn-large" style="width: 100%; cursor: pointer; margin-top: 1.5rem;">Calculate Estimate</button>
+
+                <div id="calc-result" class="calc-result"></div>
+            </div>
+
+
+        </div>
+    </section>
+
     <!-- Policies Section -->
     <section class="policies section bg-light" id="policies">
         <div class="container">
@@ -363,7 +413,7 @@
             <div class="section-header reveal">
                 <h3 class="section-subtitle">Get in Touch</h3>
                 <h2 class="section-title">Ready to Book Your Escape?</h2>
-                <p style="color: var(--text-light); max-width: 650px; margin: 0 auto;">We handle all inquiries personally to ensure you get the best experience and rates.<br>Reach out via Facebook or send us a message directly below.</p>
+                <p style="color: var(--text-light); max-width: 650px; margin: 0 auto;">We handle all inquiries personally to ensure you get the best experience.<br>Reach out via Facebook or send us a message directly below.</p>
             </div>
 
             <!-- Booking Details Info -->
@@ -443,5 +493,6 @@
 
     <!-- Scripts -->
     <script src="js/main.js"></script>
+    <script src="js/calculator.js"></script>
 </body>
 </html>
