@@ -744,6 +744,94 @@ a {
     text-align: center;
 }
 
+/* Booking Info Card */
+.booking-info-card {
+    max-width: 700px;
+    margin: 3rem auto 0;
+    background: var(--bg-white);
+    border-radius: 20px;
+    padding: 2.5rem 2.5rem 2rem;
+    text-align: center;
+    box-shadow: var(--shadow-md);
+    border-top: 5px solid var(--secondary);
+    transition: var(--transition);
+}
+
+.booking-info-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.booking-info-icon {
+    font-size: 3rem;
+    margin-bottom: 0.75rem;
+}
+
+.booking-info-card h3 {
+    font-family: var(--font-sans);
+    font-size: 1.4rem;
+    margin-bottom: 1rem;
+    color: var(--text-dark);
+}
+
+.booking-info-card > p {
+    color: var(--text-light);
+    font-size: 1rem;
+    line-height: 1.7;
+    margin-bottom: 1.5rem;
+}
+
+.booking-details-list {
+    list-style: none;
+    display: inline-block;
+    text-align: left;
+    margin: 0 auto 1.5rem;
+    padding: 0;
+}
+
+.booking-details-list li {
+    padding: 0.45rem 0;
+    font-size: 1.05rem;
+    color: var(--text-dark);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.booking-details-list li::before {
+    content: '✓';
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    background: var(--primary);
+    color: var(--white);
+    border-radius: 50%;
+    font-size: 0.7rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.detail-label {
+    font-weight: 600;
+}
+
+.detail-note {
+    font-weight: 400;
+    color: var(--text-light);
+    font-size: 0.9rem;
+}
+
+.booking-info-footer {
+    font-size: 0.95rem !important;
+    color: var(--text-light);
+    line-height: 1.7;
+    border-top: 1px solid rgba(0,0,0,0.08);
+    padding-top: 1.25rem;
+    margin-bottom: 0 !important;
+}
+
 /* Contact Grid */
 .contact-grid {
     display: grid;
@@ -889,6 +977,15 @@ a {
     
     .contact-grid {
         grid-template-columns: 1fr;
+    }
+
+    .booking-info-card {
+        padding: 2rem 1.5rem 1.5rem;
+        margin-top: 2rem;
+    }
+
+    .booking-info-card h3 {
+        font-size: 1.2rem;
     }
     
     .item-large, .item-wide {
