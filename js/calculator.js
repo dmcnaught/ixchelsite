@@ -200,7 +200,7 @@ function renderAvailabilityCalendars() {
 
     // Render 10 months of calendars
     let html = '';
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 12; i++) {
         const targetDate = new Date(currentYear, currentMonth + i, 1);
         html += renderMonth(targetDate.getFullYear(), targetDate.getMonth());
     }
@@ -262,8 +262,8 @@ function renderMonth(year, month) {
         html += `<div class="${cellClass}" title="${title}"><span class="avail-day-num">${day}</span>`;
         if (!isPast && (status2603 !== 'unknown' || status2604 !== 'unknown')) {
             html += '<div class="avail-room-dots">';
-            html += `<span class="avail-dot ${status2603 === 'free' ? 'dot-free' : 'dot-booked'}" title="Room 603: ${status2603}"></span>`;
-            html += `<span class="avail-dot ${status2604 === 'free' ? 'dot-free' : 'dot-booked'}" title="Room 604: ${status2604}"></span>`;
+            html += `<span class="avail-dot ${status2603 === 'free' ? 'dot-603-free' : 'dot-603-booked'}" title="Room 603: ${status2603}"></span>`;
+            html += `<span class="avail-dot ${status2604 === 'free' ? 'dot-604-free' : 'dot-604-booked'}" title="Room 604: ${status2604}"></span>`;
             html += '</div>';
         }
         html += '</div>';

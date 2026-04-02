@@ -1385,12 +1385,26 @@ a {
     flex-shrink: 0;
 }
 
-.dot-free {
-    background: #2ecc71;
+/* Room 603 = teal (primary), Room 604 = gold (secondary) */
+/* Filled = available, outline only = booked */
+.dot-603-free {
+    background: var(--primary);
 }
 
-.dot-booked {
-    background: #e74c3c;
+.dot-603-booked {
+    background: transparent;
+    border: 2px solid var(--primary);
+    opacity: 0.5;
+}
+
+.dot-604-free {
+    background: var(--secondary);
+}
+
+.dot-604-booked {
+    background: transparent;
+    border: 2px solid var(--secondary);
+    opacity: 0.5;
 }
 
 .dot-603 {
