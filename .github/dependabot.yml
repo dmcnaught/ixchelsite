@@ -1,0 +1,16 @@
+version: 2
+updates:
+  # Maintain NPM dependencies in the _scraper directory
+  - package-ecosystem: "npm"
+    directory: "/_scraper"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "fix"
+      include: "scope"
+
+  # Maintain GitHub Actions in the .github/workflows directory
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
