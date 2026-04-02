@@ -74,8 +74,8 @@
                 <li><a href="#about">The Suites</a></li>
                 <li><a href="#gallery">Gallery</a></li>
                 <li><a href="#amenities">Amenities</a></li>
-                <li><a href="#availability">Availability</a></li>
                 <li><a href="#calculator">Rates</a></li>
+                <li><a href="#availability">Availability</a></li>
                 <li><a href="messenger-redirect.html" target="_blank" rel="noopener noreferrer">Facebook</a></li>
                 <li><a href="https://maps.app.goo.gl/nnrn9pq7YKeQk98h7" target="_blank" rel="noopener noreferrer">Google</a></li>
                 <li><a href="#contact" class="btn-primary-small">Book Now</a></li>
@@ -263,37 +263,13 @@
         </div>
     </section>
 
-    <!-- Availability Section -->
-    <section class="availability section bg-light" id="availability">
-        <div class="container">
-            <div class="section-header reveal">
-                <h3 class="section-subtitle">Plan Your Stay</h3>
-                <h2 class="section-title">Current Availability</h2>
-                <p style="color: var(--text-light); max-width: 650px; margin: 0 auto;">See at a glance when our rooms are available.<br>If you see dates that are booked, it's always worth checking &mdash; we can often accommodate you by moving existing reservations to different units!<br>Last updated: <span id="avail-last-updated">loading...</span></p>
-            </div>
-
-            <div class="avail-legend reveal">
-                <div class="avail-legend-item"><span class="avail-dot dot-603"></span> Room 603 (Standard)</div>
-                <div class="avail-legend-item"><span class="avail-dot dot-604"></span> Room 604 (Suite)</div>
-                <div class="avail-legend-item"><span class="avail-dot dot-603-free"></span> Available</div>
-                <div class="avail-legend-item"><span class="avail-dot dot-603-booked"></span> Booked</div>
-            </div>
-
-            <div id="availability-calendars" class="avail-calendars reveal">
-                <!-- Rendered by calculator.js -->
-            </div>
-
-
-        </div>
-    </section>
-
     <!-- Rate Calculator Section -->
-    <section class="calculator section" id="calculator">
+    <section class="calculator section bg-light" id="calculator">
         <div class="container">
             <div class="section-header reveal">
                 <h3 class="section-subtitle">Estimate Your Stay</h3>
                 <h2 class="section-title">Rate Calculator</h2>
-                <p style="color: var(--text-light); max-width: 650px; margin: 0 auto;">Select your dates and room type to get an estimated cost for your stay.<br>Rates are per night in USD.</p>
+                <p style="color: var(--text-light); max-width: 650px; margin: 0 auto;">Select your dates and room type to get an estimated cost and check availability.<br>Rates are per night in USD.</p>
             </div>
 
             <div class="calculator-card reveal">
@@ -330,6 +306,30 @@
                 <button type="button" id="calc-btn" class="btn-primary btn-large" style="width: 100%; cursor: pointer; margin-top: 1.5rem;">Calculate Estimate</button>
 
                 <div id="calc-result" class="calc-result"></div>
+            </div>
+
+
+        </div>
+    </section>
+
+    <!-- Availability Section -->
+    <section class="availability section" id="availability">
+        <div class="container">
+            <div class="section-header reveal">
+                <h3 class="section-subtitle">Plan Your Stay</h3>
+                <h2 class="section-title">Current Availability</h2>
+                <p style="color: var(--text-light); max-width: 650px; margin: 0 auto;">See at a glance when our rooms are available.<br>If you see dates that are booked, it's always worth checking &mdash; we can often accommodate you by moving existing reservations to different units!<br>Last updated: <span id="avail-last-updated">loading...</span></p>
+            </div>
+
+            <div class="avail-legend reveal">
+                <div class="avail-legend-item"><span class="avail-dot dot-603"></span> Room 603 (Standard)</div>
+                <div class="avail-legend-item"><span class="avail-dot dot-604"></span> Room 604 (Suite)</div>
+                <div class="avail-legend-item"><span class="avail-dot dot-603-free"></span> Available</div>
+                <div class="avail-legend-item"><span class="avail-dot dot-603-booked"></span> Booked</div>
+            </div>
+
+            <div id="availability-calendars" class="avail-calendars reveal">
+                <!-- Rendered by calculator.js -->
             </div>
 
 
