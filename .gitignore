@@ -1,6 +1,6 @@
 node_modules/
-package-lock.json
-package.json
+/package-lock.json
+/package.json
 _scraper/node_modules/
 _scraper/debug.png
 _scraper/package-lock.json
