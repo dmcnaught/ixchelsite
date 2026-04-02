@@ -164,7 +164,7 @@ function calculateStay() {
     }
     html += '</tbody></table>';
 
-    html += `<div class="calc-total"><span>Estimated Total</span><span class="calc-total-amount">$${totalCost.toLocaleString()} USD</span></div>`;
+    html += `<div class="calc-total"><span>Estimated Total</span><span class="calc-total-amount">$${totalCost.toLocaleString()} USD <span style="font-size: 0.7em; font-weight: 400; opacity: 0.8;">including taxes</span></span></div>`;
 
     if (isOurRoom) {
         html += '<p class="calc-note calc-note-ours">\u2713 This is one of our privately owned rooms \u2014 booking is subject to availability. If our specific room is unavailable for your dates, we can also submit a general reservation request for this room type with the hotel on your behalf.</p>';
