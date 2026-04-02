@@ -3,6 +3,5 @@ node_modules/
 /package.json
 _scraper/node_modules/
 _scraper/debug.png
-_scraper/package-lock.json
 .DS_Store
 *.pdf
