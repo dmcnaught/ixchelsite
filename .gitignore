@@ -1,6 +1,8 @@
 node_modules/
 package-lock.json
 package.json
-_scraper/
+_scraper/node_modules/
+_scraper/debug.png
+_scraper/package-lock.json
 .DS_Store
 *.pdf
