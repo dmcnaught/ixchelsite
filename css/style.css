@@ -247,15 +247,16 @@ a {
     display: flex;
     list-style: none;
     align-items: center;
-    gap: 2.5rem;
+    gap: 2rem;
 }
 
 .nav-links a {
     color: var(--white);
     font-weight: 500;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.75px;
+    white-space: nowrap;
 }
 
 .navbar.scrolled .nav-links a:not(.btn-primary-small) {
