@@ -1,17 +1,17 @@
 // Rate data from IXCHEL RATE UPDATE - JAN-30-2026 V1
-// Seasons indexed: [Jan 3–Apr 30, May 1–Jul 31, Aug 1–31, Sep 1–Oct 31, Nov 1–Dec 20, Dec 21–Jan 2]
+// Seasons indexed: [Jan 3–Apr 30, May 1–Jul 31, Aug 1–31, Sep 1–Oct 31, Nov 1–Dec 20, Dec 21–Jan 2, Jan 3–Apr 30 2027+]
 const RATES = {
-    "Standard Room":                 [380, 255, 180, 165, 180, 335],
-    "One Bedroom Suite":             [470, 345, 270, 255, 270, 415],
-    "One Bedroom Suite Beachfront":  [520, 395, 320, 305, 320, 505],
-    "One Bedroom Penthouse":         [570, 445, 370, 355, 370, 555],
-    "One Bedroom Premium Penthouse": [610, 485, 410, 395, 410, 605],
-    "Two Bedroom Suite":             [670, 545, 470, 455, 470, 665],
-    "Deluxe Two Bedroom Suite":      [715, 590, 515, 500, 515, 710],
-    "Two Bedroom Suite Beachfront":  [760, 635, 560, 545, 560, 755],
-    "Two Bedroom Penthouse":         [840, 715, 640, 625, 640, 805],
-    "Two Bedroom Premium Penthouse": [1030, 905, 830, 815, 830, 955],
-    "Three Bedroom Penthouse":       [1135, 1010, 935, 920, 935, 1055]
+    "Standard Room":                 [380, 255, 180, 165, 180, 335, 255],
+    "One Bedroom Suite":             [470, 345, 270, 255, 270, 415, 345],
+    "One Bedroom Suite Beachfront":  [520, 395, 320, 305, 320, 505, 395],
+    "One Bedroom Penthouse":         [570, 445, 370, 355, 370, 555, 445],
+    "One Bedroom Premium Penthouse": [610, 485, 410, 395, 410, 605, 485],
+    "Two Bedroom Suite":             [670, 545, 470, 455, 470, 665, 545],
+    "Deluxe Two Bedroom Suite":      [715, 590, 515, 500, 515, 710, 590],
+    "Two Bedroom Suite Beachfront":  [760, 635, 560, 545, 560, 755, 635],
+    "Two Bedroom Penthouse":         [840, 715, 640, 625, 640, 805, 715],
+    "Two Bedroom Premium Penthouse": [1030, 905, 830, 815, 830, 955, 905],
+    "Three Bedroom Penthouse":       [1135, 1010, 935, 920, 935, 1055, 1010]
 };
 
 const SEASON_LABELS = [
@@ -20,7 +20,8 @@ const SEASON_LABELS = [
     "Aug 1 \u2013 Aug 31",
     "Sep 1 \u2013 Oct 31",
     "Nov 1 \u2013 Dec 20",
-    "Dec 21 \u2013 Jan 2"
+    "Dec 21 \u2013 Jan 2",
+    "Jan 3 \u2013 Apr 30 (2027+ Advance)"
 ];
 
 const OUR_ROOMS = ["Standard Room", "One Bedroom Suite", "Two Bedroom Suite"];
@@ -42,8 +43,14 @@ const ROOM_NUMBERS = {
 let availabilityData = null;
 
 function getSeason(date) {
+    const year = date.getFullYear();
     const month = date.getMonth() + 1;
     const day = date.getDate();
+
+    if (year >= 2027) {
+        if ((month === 1 && day >= 3) || (month >= 2 && month <= 4)) return 6;
+    }
+
     if ((month === 12 && day >= 21) || (month === 1 && day <= 2)) return 5;
     if ((month === 1 && day >= 3) || (month >= 2 && month <= 4)) return 0;
     if (month >= 5 && month <= 7) return 1;
