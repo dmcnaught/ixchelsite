@@ -1357,3 +1357,206 @@ a {
         font-size: 1.15rem;
     }
 }
+
+/* ============================
+   Visual Availability Calendar
+   ============================ */
+.avail-legend {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+    margin-bottom: 2.5rem;
+    font-size: 0.85rem;
+    color: var(--text-light);
+}
+
+.avail-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.avail-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.dot-free {
+    background: #2ecc71;
+}
+
+.dot-booked {
+    background: #e74c3c;
+}
+
+.dot-603 {
+    background: var(--primary);
+}
+
+.dot-604 {
+    background: var(--secondary);
+}
+
+.avail-calendars {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.5rem;
+}
+
+.avail-month {
+    background: var(--bg-white);
+    border-radius: 15px;
+    padding: 1.25rem;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+.avail-month-title {
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 0.75rem;
+    color: var(--text-dark);
+}
+
+.avail-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+}
+
+.avail-day-header {
+    text-align: center;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0.25rem 0;
+}
+
+.avail-day {
+    position: relative;
+    text-align: center;
+    padding: 0.35rem 0.15rem;
+    border-radius: 6px;
+    min-height: 38px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+}
+
+.avail-day-num {
+    font-size: 0.8rem;
+    font-weight: 500;
+    line-height: 1;
+}
+
+.avail-room-dots {
+    display: flex;
+    gap: 3px;
+    margin-top: 3px;
+}
+
+.avail-room-dots .avail-dot {
+    width: 7px;
+    height: 7px;
+}
+
+.avail-empty {
+    background: transparent;
+}
+
+.avail-past {
+    opacity: 0.3;
+}
+
+.avail-both-free {
+    background: rgba(46, 204, 113, 0.1);
+}
+
+.avail-one-free {
+    background: rgba(241, 196, 15, 0.1);
+}
+
+.avail-booked {
+    background: rgba(231, 76, 60, 0.06);
+}
+
+.avail-unknown {
+    background: rgba(0,0,0,0.02);
+}
+
+.avail-day:hover:not(.avail-empty):not(.avail-past) {
+    transform: scale(1.15);
+    box-shadow: var(--shadow-sm);
+    z-index: 1;
+}
+
+/* Availability status in calculator results */
+.calc-avail {
+    padding: 1rem 1.25rem;
+    border-radius: 10px;
+    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.calc-avail-icon {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.calc-avail-yes {
+    background: rgba(46, 204, 113, 0.1);
+    color: #1a8a4a;
+    border: 1px solid rgba(46, 204, 113, 0.3);
+}
+
+.calc-avail-no {
+    background: rgba(231, 76, 60, 0.08);
+    color: #c0392b;
+    border: 1px solid rgba(231, 76, 60, 0.2);
+}
+
+.calc-avail-link {
+    color: var(--primary) !important;
+    text-decoration: underline !important;
+    font-weight: 600;
+}
+
+/* Calendar mobile responsive */
+@media (max-width: 768px) {
+    .avail-legend {
+        gap: 1rem;
+        font-size: 0.8rem;
+    }
+
+    .avail-calendars {
+        grid-template-columns: 1fr;
+    }
+
+    .avail-day {
+        min-height: 32px;
+        padding: 0.25rem 0.1rem;
+    }
+
+    .avail-day-num {
+        font-size: 0.75rem;
+    }
+
+    .avail-room-dots .avail-dot {
+        width: 5px;
+        height: 5px;
+    }
+}
