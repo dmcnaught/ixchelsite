@@ -172,7 +172,7 @@ function calculateStay() {
         html += '<p class="calc-note calc-note-general">\u2139\uFE0F We can submit a reservation request for this room type on your behalf. Approval is subject to availability.</p>';
     }
 
-    html += '<p class="calc-fine-print">Rates are estimates based on current published rates and are subject to change. Final pricing will be confirmed at booking.</p>';
+    html += '<p class="calc-fine-print">All rates include taxes. Estimates are based on current published rates and are subject to change. Final pricing will be confirmed at booking.</p>';
     html += '</div>';
 
     showResult(resultDiv, html);
