@@ -135,7 +135,8 @@ async function main() {
         await page.goto(ADMIN_URL, { waitUntil: 'networkidle' });
         await page.waitForTimeout(2000);
 
-        const output = { lastUpdated: new Date().toISOString().split('T')[0], rooms: { '2603': {}, '2604': {} } };
+        const localDate = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Cancun' }); // YYYY-MM-DD
+        const output = { lastUpdated: localDate, rooms: { '2603': {}, '2604': {} } };
 
         for (let i = 0; i < MONTHS_TO_SCRAPE; i++) {
             const { monthLabel, data } = await scrapeCurrentMonth(page);
