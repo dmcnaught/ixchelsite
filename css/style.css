@@ -1476,8 +1476,10 @@ a {
 
 .avail-room-dots {
     display: flex;
-    gap: 3px;
-    margin-top: 3px;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    margin-top: 2px;
 }
 
 .avail-room-dots .avail-dot {
