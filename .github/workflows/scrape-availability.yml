@@ -15,10 +15,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
 
       - name: Set up Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version: '22'
 
@@ -51,9 +51,24 @@ jobs:
           git commit -m "Auto-update availability data [$(date +%Y-%m-%d)]"
           git push
 
+      - name: Send email notification
+        if: steps.changes.outputs.changed == 'true' && hashFiles('_scraper/email_summary.txt') != '' && env.MAIL_USERNAME != ''
+        continue-on-error: true
+        env:
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+        uses: dawidd6/action-send-mail@4226df7daafa6fc901a43789c49bf7ab309066e7 # v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: Ixchel Calendar Availability Changes
+          to: ${{ secrets.MAIL_USERNAME }}
+          from: Ixchel Calendar Bot
+          body: file://_scraper/email_summary.txt
       - name: Upload debug screenshot on failure
         if: failure()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: debug-screenshot
           path: _scraper/debug.png

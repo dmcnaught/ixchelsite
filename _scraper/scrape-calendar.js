@@ -161,8 +161,44 @@ async function main() {
             if (i < MONTHS_TO_SCRAPE - 1) await navigateToNextMonth(page);
         }
 
+        let oldData = null;
+        if (fs.existsSync(OUTPUT_PATH)) {
+            try {
+                oldData = JSON.parse(fs.readFileSync(OUTPUT_PATH, 'utf8'));
+            } catch (e) {
+                console.warn('Could not parse old availability data.');
+            }
+        }
+
         fs.writeFileSync(OUTPUT_PATH, JSON.stringify(output, null, 2));
         console.log(`\n✓ Written to ${OUTPUT_PATH}`);
+
+        if (oldData && oldData.rooms) {
+            let emailBody = "Availability Changes Detected:\n\n";
+            let hasChanges = false;
+            for (const room of ROOMS) {
+                let roomChanges = [];
+                // Sort dates to make they appear chronologically
+                const dates = Object.keys(output.rooms[room]).sort();
+                for (const date of dates) {
+                    const status = output.rooms[room][date];
+                    const oldStatus = oldData.rooms[room]?.[date];
+                    if (oldStatus && oldStatus !== status) {
+                        const dateObj = new Date(date + 'T12:00:00');
+                        const formattedDate = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                        roomChanges.push(`• ${formattedDate}: changed from ${oldStatus.toUpperCase()} to ${status.toUpperCase()}`);
+                    }
+                }
+                if (roomChanges.length > 0) {
+                    hasChanges = true;
+                    emailBody += `Room ${room}:\n${roomChanges.join("\n")}\n\n`;
+                }
+            }
+            if (hasChanges) {
+                fs.writeFileSync(path.join(__dirname, 'email_summary.txt'), emailBody);
+                console.log('✓ Generated email_summary.txt');
+            }
+        }
     } catch (err) {
         console.error('Failed:', err.message);
         await page.screenshot({ path: path.join(__dirname, 'debug.png'), fullPage: true });
