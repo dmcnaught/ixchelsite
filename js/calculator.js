@@ -176,7 +176,7 @@ function calculateStay() {
 
     html += '<div class="calc-breakout" style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px; margin-top: 12px; font-size: 0.9em; opacity: 0.9;">';
     html += `   <div>Room Subtotal: <strong>$${subtotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong></div>`;
-    html += `   <div>Taxes & Fees (19%): <strong>$${taxAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong></div>`;
+    html += `   <div>Taxes (19%): <strong>$${taxAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong></div>`;
     html += '</div>';
 
     html += `<div class="calc-total"><span>Estimated Total</span><span class="calc-total-amount">$${totalCost.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} USD</span></div>`;
