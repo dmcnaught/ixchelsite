@@ -153,7 +153,7 @@ function calculateStay() {
             if (avail.available) {
                 html += '<div class="calc-avail calc-avail-yes"><span class="calc-avail-icon">\u2705</span> These dates appear to be available!</div>';
             } else {
-                html += '<div class="calc-avail calc-avail-no"><span class="calc-avail-icon">\u274C</span> Some of your selected dates are not available for this room. <a href="#contact" class="calc-avail-link">Contact us</a> for alternatives.</div>';
+                html += '<div class="calc-avail calc-avail-no"><span class="calc-avail-icon">\u274C</span> Some of your selected dates are not available for this room. <a href="#contact" class="calc-avail-link">Contact us</a> to see if we can make it work for you.</div>';
             }
         }
     }
