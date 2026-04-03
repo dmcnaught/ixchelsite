@@ -171,7 +171,15 @@ function calculateStay() {
     }
     html += '</tbody></table>';
 
-    html += `<div class="calc-total"><span>Estimated Total</span><span class="calc-total-amount">$${totalCost.toLocaleString()} USD <span style="font-size: 0.7em; font-weight: 400; opacity: 0.8;">including taxes</span></span></div>`;
+    const subtotal = totalCost / 1.19;
+    const taxAmount = totalCost - subtotal;
+
+    html += '<div class="calc-breakout" style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px; margin-top: 12px; font-size: 0.9em; opacity: 0.9;">';
+    html += `   <div>Room Subtotal: <strong>$${subtotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong></div>`;
+    html += `   <div>Taxes & Fees (19%): <strong>$${taxAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong></div>`;
+    html += '</div>';
+
+    html += `<div class="calc-total"><span>Estimated Total</span><span class="calc-total-amount">$${totalCost.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} USD</span></div>`;
 
     if (isOurRoom) {
         html += '<p class="calc-note calc-note-ours">\u2713 This is one of our privately owned rooms \u2014 booking is subject to availability. If our specific room is unavailable for your dates, we can also submit a general reservation request for this room type with the hotel on your behalf.</p>';
