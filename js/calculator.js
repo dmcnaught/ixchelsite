@@ -192,6 +192,16 @@ function calculateStay() {
 
     showResult(resultDiv, html);
     resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    // Track estimate generation in Google Analytics
+    if (typeof gtag === 'function') {
+        gtag('event', 'generate_estimate', {
+            'room_type': roomType,
+            'total_nights': totalNights,
+            'predicted_value': totalCost,
+            'currency': 'USD'
+        });
+    }
 }
 
 function showResult(el, html) {

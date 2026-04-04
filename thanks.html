@@ -17,6 +17,11 @@
           'value': 1.0,
           'currency': 'USD'
       });
+      // Explicitly track the form submission as a lead for Google Analytics
+      gtag('event', 'generate_lead', {
+          'currency': 'USD',
+          'value': 1.0
+      });
     </script>
 
     <link rel="stylesheet" href="css/style.css">
