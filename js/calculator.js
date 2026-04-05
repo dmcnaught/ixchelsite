@@ -202,6 +202,16 @@ function calculateStay() {
             'currency': 'USD'
         });
     }
+
+    // Track estimate generation in Facebook Ads as a Custom Event
+    if (typeof fbq === 'function') {
+        fbq('trackCustom', 'GenerateEstimate', {
+            room_type: roomType,
+            total_nights: totalNights,
+            value: totalCost,
+            currency: 'USD'
+        });
+    }
 }
 
 function showResult(el, html) {
