@@ -29,7 +29,7 @@ async function getMonthLabel(page) {
 
 async function navigateToNextMonth(page) {
     await page.click('button.nextPeriod');
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(6000); // Wait longer for API to load reservations
 }
 
 async function scrapeCurrentMonth(page) {
@@ -133,7 +133,7 @@ async function main() {
     try {
         await login(page, email, password);
         await page.goto(ADMIN_URL, { waitUntil: 'networkidle' });
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(8000); // Much longer initial wait for the heavy calendar app to initialize
 
         const localDate = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Cancun' }); // YYYY-MM-DD
         const output = { lastUpdated: localDate, rooms: { '2603': {}, '2604': {} } };
