@@ -11,7 +11,7 @@ const OUTPUT_PATH = path.join(__dirname, '..', 'js', 'availability.json');
 
 async function login(page, email, password) {
     console.log('Navigating to login page...');
-    await page.goto(LOGIN_URL, { waitUntil: 'networkidle' });
+    await page.goto(LOGIN_URL, { waitUntil: 'domcontentloaded' });
     await page.fill('#email', email);
     await page.fill('#password', password);
     await page.click('button[type="submit"]');
@@ -137,7 +137,7 @@ async function main() {
 
     try {
         await login(page, email, password);
-        await page.goto(ADMIN_URL, { waitUntil: 'networkidle' });
+        await page.goto(ADMIN_URL, { waitUntil: 'domcontentloaded' });
         await page.waitForTimeout(8000); // Much longer initial wait for the heavy calendar app to initialize
 
         const localDate = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Cancun' }); // YYYY-MM-DD
