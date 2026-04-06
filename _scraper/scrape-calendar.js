@@ -56,11 +56,7 @@ async function scrapeCurrentMonth(page) {
         // The week container has a class like ws2026-03-29 (week start date)
         // Each event has an offsetN class (0=Sun..6=Sat) indicating which day
         const reservedDates = {};
-        const eventDetails = {};
-        rooms.forEach(r => { 
-            reservedDates[r] = new Set(); 
-            eventDetails[r] = {};
-        });
+        rooms.forEach(r => { reservedDates[r] = new Set(); });
 
         const events = document.querySelectorAll('.cv-event');
         events.forEach(event => {
@@ -92,10 +88,8 @@ async function scrapeCurrentMonth(page) {
             eventDate.setDate(eventDate.getDate() + offset);
             const dateStr = eventDate.toISOString().split('T')[0];
 
-            // Check if this is a reservation (has confirmation number with >)
             if (text.includes('>')) {
                 reservedDates[eventRoom].add(dateStr);
-                eventDetails[eventRoom][dateStr] = text.replace(/\s+/g, ' ').trim();
             }
         });
 
@@ -107,10 +101,10 @@ async function scrapeCurrentMonth(page) {
             });
         });
 
-        return { result, eventDetails };
+        return result;
     }, ROOMS);
 
-    return { monthLabel, data: data.result, details: data.eventDetails };
+    return { monthLabel, data };
 }
 
 function parseMonthLabel(label) {
@@ -142,10 +136,9 @@ async function main() {
 
         const localDate = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Cancun' }); // YYYY-MM-DD
         const output = { lastUpdated: localDate, rooms: { '2603': {}, '2604': {} } };
-        const detailsCache = { '2603': {}, '2604': {} };
 
         for (let i = 0; i < MONTHS_TO_SCRAPE; i++) {
-            const { monthLabel, data, details } = await scrapeCurrentMonth(page);
+            const { monthLabel, data } = await scrapeCurrentMonth(page);
             const parsed = parseMonthLabel(monthLabel);
             if (parsed) {
                 const { year, month } = parsed;
@@ -154,9 +147,6 @@ async function main() {
                     for (let day = 1; day <= daysInMonth; day++) {
                         const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                         output.rooms[room][dateStr] = data[room]?.[day] || 'free';
-                        if (details[room]?.[dateStr]) {
-                            detailsCache[room][dateStr] = details[room][dateStr];
-                        }
                     }
                 }
                 const free2603 = Object.values(data['2603']).filter(v => v === 'free').length;
@@ -195,13 +185,7 @@ async function main() {
                     if (oldStatus && oldStatus !== status) {
                         const dateObj = new Date(date + 'T12:00:00');
                         const formattedDate = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                        let changeText = `• ${formattedDate}: changed from ${oldStatus.toUpperCase()} to ${status.toUpperCase()}`;
-                        
-                        if (status === 'reserved' && detailsCache[room][date]) {
-                            changeText += `\n    ↳ Details: ${detailsCache[room][date]}`;
-                        }
-                        
-                        roomChanges.push(changeText);
+                        roomChanges.push(`• ${formattedDate}: changed from ${oldStatus.toUpperCase()} to ${status.toUpperCase()}`);
                     }
                 }
                 if (roomChanges.length > 0) {
