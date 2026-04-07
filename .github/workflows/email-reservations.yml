@@ -1,0 +1,62 @@
+name: Email Reservations Summary
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        working-directory: _scraper
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: _scraper
+        run: npx playwright install chromium --with-deps
+
+      - name: Run scraper
+        working-directory: _scraper
+        env:
+          IXCHEL_EMAIL: ${{ secrets.IXCHEL_EMAIL }}
+          IXCHEL_PASSWORD: ${{ secrets.IXCHEL_PASSWORD }}
+        run: node scrape-reservations.js
+
+
+
+      - name: Send email notification
+        if: hashFiles('_scraper/email_summary.txt') != '' && env.MAIL_USERNAME != ''
+        continue-on-error: true
+        env:
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+        uses: dawidd6/action-send-mail@2cea9617b09d79a095af21254fbcb7ae95903dde # v3.12.0
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: Ixchel Calendar Reservations Summary
+          to: ${{ secrets.MAIL_USERNAME }}
+          from: Ixchel Calendar Bot
+          body: file://_scraper/email_summary.txt
+      - name: Upload debug screenshot on failure
+        if: failure()
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: debug-screenshot
+          path: _scraper/debug.png
+          retention-days: 3
