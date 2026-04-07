@@ -56,7 +56,7 @@ async function scrapeCurrentMonth(page) {
         // The week container has a class like ws2026-03-29 (week start date)
         // Each event has an offsetN class (0=Sun..6=Sat) indicating which day
         const reservedDates = {};
-        rooms.forEach(r => { reservedDates[r] = new Set(); });
+        rooms.forEach(r => { reservedDates[r] = {}; });
 
         const events = document.querySelectorAll('.cv-event');
         events.forEach(event => {
@@ -89,7 +89,8 @@ async function scrapeCurrentMonth(page) {
             const dateStr = eventDate.toISOString().split('T')[0];
 
             if (text.includes('>')) {
-                reservedDates[eventRoom].add(dateStr);
+                if (!reservedDates[eventRoom][dateStr]) reservedDates[eventRoom][dateStr] = [];
+                reservedDates[eventRoom][dateStr].push(text.replace(/\s+/g, ' '));
             }
         });
 
@@ -97,7 +98,11 @@ async function scrapeCurrentMonth(page) {
         allDates.forEach(dateStr => {
             const day = parseInt(dateStr.split('-')[2]);
             rooms.forEach(room => {
-                result[room][day] = reservedDates[room].has(dateStr) ? 'reserved' : 'free';
+                const details = reservedDates[room][dateStr] || [];
+                result[room][day] = {
+                    status: details.length > 0 ? 'reserved' : 'free',
+                    details: details
+                };
             });
         });
 
@@ -136,6 +141,7 @@ async function main() {
 
         const localDate = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Cancun' }); // YYYY-MM-DD
         const output = { lastUpdated: localDate, rooms: { '2603': {}, '2604': {} } };
+        const detailsMap = { '2603': {}, '2604': {} };
 
         for (let i = 0; i < MONTHS_TO_SCRAPE; i++) {
             const { monthLabel, data } = await scrapeCurrentMonth(page);
@@ -146,13 +152,15 @@ async function main() {
                 for (const room of ROOMS) {
                     for (let day = 1; day <= daysInMonth; day++) {
                         const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                        output.rooms[room][dateStr] = data[room]?.[day] || 'free';
+                        const dayData = data[room]?.[day] || { status: 'free', details: [] };
+                        output.rooms[room][dateStr] = dayData.status;
+                        detailsMap[room][dateStr] = dayData.details;
                     }
                 }
-                const free2603 = Object.values(data['2603']).filter(v => v === 'free').length;
-                const rsrv2603 = Object.values(data['2603']).filter(v => v === 'reserved').length;
-                const free2604 = Object.values(data['2604']).filter(v => v === 'free').length;
-                const rsrv2604 = Object.values(data['2604']).filter(v => v === 'reserved').length;
+                const free2603 = Object.values(data['2603']).filter(v => v && v.status === 'free').length;
+                const rsrv2603 = Object.values(data['2603']).filter(v => v && v.status === 'reserved').length;
+                const free2604 = Object.values(data['2604']).filter(v => v && v.status === 'free').length;
+                const rsrv2604 = Object.values(data['2604']).filter(v => v && v.status === 'reserved').length;
                 console.log(`  ✓ ${monthLabel}: 603=${free2603} free/${rsrv2603} reserved, 604=${free2604} free/${rsrv2604} reserved`);
             } else {
                 console.warn(`  ⚠ Could not parse month: "${monthLabel}"`);
@@ -185,7 +193,11 @@ async function main() {
                     if (oldStatus && oldStatus !== status) {
                         const dateObj = new Date(date + 'T12:00:00');
                         const formattedDate = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                        roomChanges.push(`• ${formattedDate}: changed from ${oldStatus.toUpperCase()} to ${status.toUpperCase()}`);
+                        let emailLine = `• ${formattedDate}: changed from ${oldStatus.toUpperCase()} to ${status.toUpperCase()}`;
+                        if (status === 'reserved' && detailsMap[room][date] && detailsMap[room][date].length > 0) {
+                            emailLine += ` (Details: ${detailsMap[room][date].join(', ')})`;
+                        }
+                        roomChanges.push(emailLine);
                     }
                 }
                 if (roomChanges.length > 0) {
