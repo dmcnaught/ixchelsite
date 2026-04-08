@@ -37,19 +37,20 @@ jobs:
         env:
           IXCHEL_EMAIL: ${{ secrets.IXCHEL_EMAIL }}
           IXCHEL_PASSWORD: ${{ secrets.IXCHEL_PASSWORD }}
+          DETAILS_ENCRYPTION_KEY: ${{ secrets.DETAILS_ENCRYPTION_KEY }}
         run: node scrape-calendar.js
 
       - name: Check for changes
         id: changes
         run: |
-          git diff --quiet js/availability.json || echo "changed=true" >> $GITHUB_OUTPUT
+          git diff --quiet js/availability.json js/availability_details.enc 2>/dev/null || echo "changed=true" >> $GITHUB_OUTPUT
 
       - name: Commit and push
         if: steps.changes.outputs.changed == 'true'
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
-          git add js/availability.json
+          git add js/availability.json js/availability_details.enc
           git commit -m "Auto-update availability data [$(date +%Y-%m-%d)]"
           git push
 

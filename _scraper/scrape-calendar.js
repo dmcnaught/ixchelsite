@@ -1,6 +1,7 @@
 const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 const CALENDAR_URL = 'https://ixchelcalendar.com';
 const LOGIN_URL = `${CALENDAR_URL}/login`;
@@ -8,6 +9,35 @@ const ADMIN_URL = `${CALENDAR_URL}/admin`;
 const ROOMS = ['2603', '2604'];
 const MONTHS_TO_SCRAPE = 12;
 const OUTPUT_PATH = path.join(__dirname, '..', 'js', 'availability.json');
+const DETAILS_PATH = path.join(__dirname, '..', 'js', 'availability_details.enc');
+
+function getEncryptionKey() {
+    const secret = process.env.DETAILS_ENCRYPTION_KEY;
+    if (!secret) return null;
+    // Derive a 32-byte key from the secret using SHA-256
+    return crypto.createHash('sha256').update(secret).digest();
+}
+
+function encryptJSON(data, key) {
+    const plaintext = JSON.stringify(data);
+    const iv = crypto.randomBytes(12);
+    const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+    const encrypted = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()]);
+    const authTag = cipher.getAuthTag();
+    // Format: base64(iv + authTag + ciphertext)
+    return Buffer.concat([iv, authTag, encrypted]).toString('base64');
+}
+
+function decryptJSON(encoded, key) {
+    const buf = Buffer.from(encoded, 'base64');
+    const iv = buf.subarray(0, 12);
+    const authTag = buf.subarray(12, 28);
+    const ciphertext = buf.subarray(28);
+    const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+    decipher.setAuthTag(authTag);
+    const plaintext = decipher.update(ciphertext) + decipher.final('utf8');
+    return JSON.parse(plaintext);
+}
 
 async function login(page, email, password) {
     console.log('Navigating to login page...');
@@ -177,27 +207,70 @@ async function main() {
             }
         }
 
+        const encKey = getEncryptionKey();
+        let oldDetails = null;
+        if (fs.existsSync(DETAILS_PATH)) {
+            try {
+                if (encKey) {
+                    const encrypted = fs.readFileSync(DETAILS_PATH, 'utf8');
+                    oldDetails = decryptJSON(encrypted, encKey);
+                } else {
+                    oldDetails = JSON.parse(fs.readFileSync(DETAILS_PATH, 'utf8'));
+                }
+            } catch (e) {
+                console.warn('Could not read old details data:', e.message);
+            }
+        }
+
         fs.writeFileSync(OUTPUT_PATH, JSON.stringify(output, null, 2));
         console.log(`\n✓ Written to ${OUTPUT_PATH}`);
+
+        if (encKey) {
+            fs.writeFileSync(DETAILS_PATH, encryptJSON(detailsMap, encKey));
+            console.log(`✓ Written encrypted details to ${DETAILS_PATH}`);
+        } else {
+            console.warn('⚠ DETAILS_ENCRYPTION_KEY not set — skipping details file (will not persist for next comparison)');
+        }
 
         if (oldData && oldData.rooms) {
             let emailBody = "Availability Changes Detected:\n\n";
             let hasChanges = false;
             for (const room of ROOMS) {
                 let roomChanges = [];
-                // Sort dates to make they appear chronologically
+                // Sort dates so they appear chronologically
                 const dates = Object.keys(output.rooms[room]).sort();
                 for (const date of dates) {
                     const status = output.rooms[room][date];
                     const oldStatus = oldData.rooms[room]?.[date];
+                    const newDetails = detailsMap[room]?.[date] || [];
+                    const prevDetails = oldDetails?.[room]?.[date] || [];
+                    const dateObj = new Date(date + 'T12:00:00');
+                    const formattedDate = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
                     if (oldStatus && oldStatus !== status) {
-                        const dateObj = new Date(date + 'T12:00:00');
-                        const formattedDate = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                        // Status changed (e.g. free → reserved or reserved → free)
                         let emailLine = `• ${formattedDate}: changed from ${oldStatus.toUpperCase()} to ${status.toUpperCase()}`;
-                        if (status === 'reserved' && detailsMap[room][date] && detailsMap[room][date].length > 0) {
-                            emailLine += ` (Details: ${detailsMap[room][date].join(', ')})`;
+                        if (status === 'reserved' && newDetails.length > 0) {
+                            emailLine += `\n    New: ${newDetails.join(', ')}`;
+                        }
+                        if (oldStatus === 'reserved' && prevDetails.length > 0) {
+                            emailLine += `\n    Was: ${prevDetails.join(', ')}`;
                         }
                         roomChanges.push(emailLine);
+                    } else if (status === 'reserved' && oldStatus === 'reserved') {
+                        // Status stayed reserved — check if details changed
+                        const newStr = JSON.stringify(newDetails);
+                        const oldStr = JSON.stringify(prevDetails);
+                        if (newStr !== oldStr) {
+                            let emailLine = `• ${formattedDate}: reservation details changed`;
+                            if (prevDetails.length > 0) {
+                                emailLine += `\n    Was: ${prevDetails.join(', ')}`;
+                            }
+                            if (newDetails.length > 0) {
+                                emailLine += `\n    Now: ${newDetails.join(', ')}`;
+                            }
+                            roomChanges.push(emailLine);
+                        }
                     }
                 }
                 if (roomChanges.length > 0) {
