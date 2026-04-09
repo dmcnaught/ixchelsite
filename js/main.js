@@ -65,3 +65,37 @@ document.addEventListener("DOMContentLoaded", () => {
         document.querySelector('.hero-content.reveal').classList.add('active');
     }, 100);
 });
+
+// Handle contact form submission via AJAX to ensure redirect to thanks.html
+// (Formspree's built-in _next redirect was not working, which prevented
+// the Meta Lead pixel event on thanks.html from firing)
+const contactForm = document.getElementById('contact-form');
+if (contactForm) {
+    contactForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const form = e.target;
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Sending...';
+        submitBtn.disabled = true;
+
+        fetch(form.action, {
+            method: 'POST',
+            body: new FormData(form),
+            headers: { 'Accept': 'application/json' }
+        })
+        .then(response => {
+            if (response.ok) {
+                window.location.href = 'https://ixchel603and604.com/thanks.html';
+            } else {
+                throw new Error('Form submission failed');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            submitBtn.textContent = 'Error — Please try again';
+            submitBtn.disabled = false;
+            setTimeout(() => { submitBtn.textContent = originalText; }, 3000);
+        });
+    });
+}
