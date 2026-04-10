@@ -1,4 +1,29 @@
 User-agent: *
 Allow: /
 
+# AI Crawlers — explicitly welcome
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Googlebot
+Allow: /
+
+User-agent: Meta-ExternalAgent
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
 Sitemap: https://ixchel603and604.com/sitemap.xml
+
+# AI-readable summary of this site
+# See: https://ixchel603and604.com/llms.txt
