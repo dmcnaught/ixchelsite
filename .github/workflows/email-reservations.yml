@@ -53,7 +53,7 @@ jobs:
           password: ${{ secrets.MAIL_PASSWORD }}
           subject: Ixchel Calendar Reservations Summary
           to: ${{ secrets.MAIL_USERNAME }}
-          from: Ixchel Calendar Bot
+          from: Ixchel Calendar Bot <${{ secrets.MAIL_USERNAME }}>
           body: file://_scraper/email_summary.txt
       - name: Upload debug screenshot on failure
         if: failure()
