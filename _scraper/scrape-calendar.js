@@ -153,6 +153,251 @@ function parseMonthLabel(label) {
     return { month: months[match[1]], year: parseInt(match[2]) };
 }
 
+// ============================
+//  Rate / Cost Calculation
+// ============================
+
+// Nightly rates indexed by season (must stay in sync with js/calculator.js)
+const NIGHTLY_RATES = {
+    'Standard Room':       [380, 255, 180, 165, 180, 335, 268, 189, 173, 189, 352],
+    'One Bedroom Suite':   [470, 345, 270, 255, 270, 415, 362, 284, 268, 284, 436],
+    'Two Bedroom Suite':   [670, 545, 470, 455, 470, 665, 572, 494, 478, 494, 698],
+};
+
+// Room number → room type when booked individually
+const ROOM_TYPE = { '2603': 'Standard Room', '2604': 'One Bedroom Suite' };
+
+const MONTH_NAMES = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+];
+
+function getSeason(date) {
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+
+    if (year >= 2027) {
+        if (year === 2027 && month === 1 && day <= 2) return 5;
+        if ((month === 12 && day >= 21) || (month === 1 && day <= 2)) return 10;
+        if ((month === 1 && day >= 3) || (month >= 2 && month <= 4)) return 6;
+        if (month >= 5 && month <= 8) return 7;
+        if (month >= 9 && month <= 10) return 8;
+        if (month === 11 || (month === 12 && day <= 20)) return 9;
+        return 6;
+    }
+
+    if ((month === 12 && day >= 21) || (month === 1 && day <= 2)) return 5;
+    if ((month === 1 && day >= 3) || (month >= 2 && month <= 4)) return 0;
+    if (month >= 5 && month <= 7) return 1;
+    if (month === 8) return 2;
+    if (month >= 9 && month <= 10) return 3;
+    if (month === 11 || (month === 12 && day <= 20)) return 4;
+    return 0;
+}
+
+/**
+ * Extract reservation number from detail text like "Room #2603 > 0111111-001"
+ */
+function extractReservationNumber(detailText) {
+    const match = detailText.match(/>\s*(\S+)/);
+    return match ? match[1] : null;
+}
+
+/**
+ * Build grouped reservation objects from the full detailsMap.
+ * Returns an array of { resNumber, room, dates[], startDate, endDate }.
+ * When both rooms share the same reservation number on overlapping dates,
+ * they are merged into a single entry with room='both'.
+ */
+function groupReservations(detailsMap) {
+    // First pass: collect all (room, date, resNumber) tuples
+    const entries = []; // { room, dateStr, resNumber }
+    for (const room of ROOMS) {
+        const dates = Object.keys(detailsMap[room] || {}).sort();
+        for (const dateStr of dates) {
+            const details = detailsMap[room][dateStr] || [];
+            for (const detail of details) {
+                const resNum = extractReservationNumber(detail);
+                if (resNum) {
+                    entries.push({ room, dateStr, resNumber: resNum });
+                }
+            }
+        }
+    }
+
+    // Second pass: group consecutive dates by (room, resNumber)
+    const groups = []; // { resNumber, room, dates: Set }
+
+    // Process per room to keep things simple
+    for (const room of ROOMS) {
+        const roomEntries = entries.filter(e => e.room === room).sort((a, b) => a.dateStr.localeCompare(b.dateStr));
+        let currentGroup = null;
+        let prevDate = null;
+
+        for (const entry of roomEntries) {
+            const entryDate = new Date(entry.dateStr + 'T12:00:00');
+            const isConsecutive = prevDate && ((entryDate - prevDate) === 86400000); // 1 day in ms
+
+            if (currentGroup && currentGroup.resNumber === entry.resNumber && isConsecutive) {
+                currentGroup.dates.add(entry.dateStr);
+            } else {
+                currentGroup = { resNumber: entry.resNumber, room, dates: new Set([entry.dateStr]) };
+                groups.push(currentGroup);
+            }
+            prevDate = entryDate;
+        }
+    }
+
+    // Third pass: detect "both rooms" — same resNumber with overlapping dates
+    const merged = [];
+    const used = new Set();
+
+    for (let i = 0; i < groups.length; i++) {
+        if (used.has(i)) continue;
+        const g = groups[i];
+
+        // Look for a matching group on the other room
+        let mergedWith = null;
+        for (let j = i + 1; j < groups.length; j++) {
+            if (used.has(j)) continue;
+            const h = groups[j];
+            if (h.resNumber === g.resNumber && h.room !== g.room) {
+                // Check for date overlap
+                const overlap = [...g.dates].some(d => h.dates.has(d));
+                if (overlap) {
+                    mergedWith = j;
+                    break;
+                }
+            }
+        }
+
+        if (mergedWith !== null) {
+            const h = groups[mergedWith];
+            const allDates = new Set([...g.dates, ...h.dates]);
+            merged.push({ resNumber: g.resNumber, room: 'both', dates: allDates });
+            used.add(i);
+            used.add(mergedWith);
+        } else {
+            merged.push(g);
+            used.add(i);
+        }
+    }
+
+    // Sort each group's dates and compute start/end
+    return merged.map(g => {
+        const sortedDates = [...g.dates].sort();
+        return {
+            resNumber: g.resNumber,
+            room: g.room,
+            dates: sortedDates,
+            startDate: sortedDates[0],
+            endDate: sortedDates[sortedDates.length - 1],
+        };
+    }).sort((a, b) => a.startDate.localeCompare(b.startDate));
+}
+
+/**
+ * Calculate the cost for a reservation, optionally split by month.
+ * Returns { totalCost, monthBreakdown: [{ monthName, nights, cost }] }
+ */
+function calculateReservationCost(dates, roomType) {
+    const rates = NIGHTLY_RATES[roomType];
+    if (!rates) return null;
+
+    let totalCost = 0;
+    const byMonth = {}; // "YYYY-MM" → { monthName, nights, cost }
+
+    for (const dateStr of dates) {
+        const d = new Date(dateStr + 'T12:00:00');
+        const season = getSeason(d);
+        const nightly = rates[season];
+        totalCost += nightly;
+
+        const monthKey = dateStr.substring(0, 7); // "YYYY-MM"
+        if (!byMonth[monthKey]) {
+            byMonth[monthKey] = { monthName: MONTH_NAMES[d.getMonth()], nights: 0, cost: 0 };
+        }
+        byMonth[monthKey].nights++;
+        byMonth[monthKey].cost += nightly;
+    }
+
+    const monthBreakdown = Object.keys(byMonth).sort().map(k => byMonth[k]);
+    return { totalCost, monthBreakdown };
+}
+
+/**
+ * Build the cost summary section for the email.
+ * Format example:
+ *   Noticed 4-17-26: Room #2603 > 0111111-001 4 nights from 5th $330
+ *   Noticed 4-17-26: Room #2604 > 0110859-001 7 nights from 29th, 2 in April $470, 5 in May $345
+ *   Noticed 4-17-26: Both Rooms > 0112345-001 5 nights from 10th $670 [Two Bedroom Suite]
+ */
+function buildReservationCostSummary(output, detailsMap, noticedDateStr) {
+    const reservations = groupReservations(detailsMap);
+    if (reservations.length === 0) return null;
+
+    // Format the "noticed" date as M-D-YY
+    const nd = new Date(noticedDateStr + 'T12:00:00');
+    const noticedFormatted = `${nd.getMonth() + 1}-${nd.getDate()}-${String(nd.getFullYear()).slice(-2)}`;
+
+    const lines = [];
+    for (const res of reservations) {
+        const totalNights = res.dates.length;
+        const startD = new Date(res.startDate + 'T12:00:00');
+        const startDay = startD.getDate();
+
+        // Determine room type for pricing
+        let roomType;
+        let roomLabel;
+        if (res.room === 'both') {
+            roomType = 'Two Bedroom Suite';
+            roomLabel = 'Both Rooms';
+        } else {
+            roomType = ROOM_TYPE[res.room];
+            roomLabel = `Room #${res.room}`;
+        }
+
+        const costInfo = calculateReservationCost(res.dates, roomType);
+        if (!costInfo) continue;
+
+        // Format the day ordinal
+        const dayStr = `${startDay}${ordinalSuffix(startDay)}`;
+
+        let line = `Noticed ${noticedFormatted}: ${roomLabel} > ${res.resNumber} ${totalNights} night${totalNights !== 1 ? 's' : ''} from ${dayStr}`;
+
+        if (costInfo.monthBreakdown.length === 1) {
+            // Single month — just total cost
+            line += ` $${costInfo.totalCost.toLocaleString()}`;
+        } else {
+            // Multiple months — break down per month
+            const parts = costInfo.monthBreakdown.map(m =>
+                `${m.nights} in ${m.monthName} $${m.cost.toLocaleString()}`
+            );
+            line += `, ${parts.join(', ')}`;
+        }
+
+        if (res.room === 'both') {
+            line += ' [Two Bedroom Suite]';
+        }
+
+        lines.push(line);
+    }
+
+    if (lines.length === 0) return null;
+    return `\n---\nReservations & Costs:\n${lines.join('\n')}\n`;
+}
+
+function ordinalSuffix(day) {
+    if (day >= 11 && day <= 13) return 'th';
+    switch (day % 10) {
+        case 1: return 'st';
+        case 2: return 'nd';
+        case 3: return 'rd';
+        default: return 'th';
+    }
+}
+
 async function main() {
     const email = process.env.IXCHEL_EMAIL;
     const password = process.env.IXCHEL_PASSWORD;
@@ -279,6 +524,11 @@ async function main() {
                 }
             }
             if (hasChanges) {
+                // Build reservation cost summary for changed reservations
+                const costSummary = buildReservationCostSummary(output, detailsMap, localDate);
+                if (costSummary) {
+                    emailBody += costSummary;
+                }
                 fs.writeFileSync(path.join(__dirname, 'email_summary.txt'), emailBody);
                 console.log('✓ Generated email_summary.txt');
             }
