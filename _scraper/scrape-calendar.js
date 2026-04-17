@@ -383,13 +383,15 @@ function buildReservationCostSummary(output, detailsMap, noticedDateStr, changed
         let line = `Noticed ${noticedFormatted}: ${startMonth} ${roomLabel} > ${res.resNumber} ${totalNights} night${totalNights !== 1 ? 's' : ''} from ${dayStr}`;
 
         if (costInfo.monthBreakdown.length === 1) {
-            // Single month — just total cost
-            line += ` $${costInfo.totalCost.toLocaleString()}`;
+            // Single month — show per-night rate
+            const perNight = Math.round(costInfo.totalCost / totalNights);
+            line += ` $${perNight.toLocaleString()}`;
         } else {
-            // Multiple months — break down per month
-            const parts = costInfo.monthBreakdown.map(m =>
-                `${m.nights} in ${m.monthName} $${m.cost.toLocaleString()}`
-            );
+            // Multiple months — per-night rate per month
+            const parts = costInfo.monthBreakdown.map(m => {
+                const perNight = Math.round(m.cost / m.nights);
+                return `${m.nights} in ${m.monthName} $${perNight.toLocaleString()}`;
+            });
             line += `, ${parts.join(', ')}`;
         }
 
