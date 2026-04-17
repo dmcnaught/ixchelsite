@@ -333,8 +333,21 @@ function calculateReservationCost(dates, roomType) {
  *   Noticed 4-17-26: Room #2604 > 0110859-001 7 nights from 29th, 2 in April $470, 5 in May $345
  *   Noticed 4-17-26: Both Rooms > 0112345-001 5 nights from 10th $670 [Two Bedroom Suite]
  */
-function buildReservationCostSummary(output, detailsMap, noticedDateStr) {
-    const reservations = groupReservations(detailsMap);
+function buildReservationCostSummary(output, detailsMap, noticedDateStr, changedDates = null) {
+    let reservations = groupReservations(detailsMap);
+    if (reservations.length === 0) return null;
+
+    // Filter to only include reservations that overlap with detected changes
+    if (changedDates) {
+        reservations = reservations.filter(res => {
+            if (res.room === 'both') {
+                return res.dates.some(d => (changedDates['2603'] && changedDates['2603'].has(d)) || (changedDates['2604'] && changedDates['2604'].has(d)));
+            } else {
+                return res.dates.some(d => changedDates[res.room] && changedDates[res.room].has(d));
+            }
+        });
+    }
+
     if (reservations.length === 0) return null;
 
     // Format the "noticed" date as M-D-YY
@@ -480,6 +493,7 @@ async function main() {
         if (oldData && oldData.rooms) {
             let emailBody = "Availability Changes Detected:\n\n";
             let hasChanges = false;
+            const changedDates = { '2603': new Set(), '2604': new Set() };
             for (const room of ROOMS) {
                 let roomChanges = [];
                 // Sort dates so they appear chronologically
@@ -492,30 +506,36 @@ async function main() {
                     const dateObj = new Date(date + 'T12:00:00');
                     const formattedDate = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
+                    let isChanged = false;
+                    let emailLine = "";
+
                     if (oldStatus && oldStatus !== status) {
-                        // Status changed (e.g. free → reserved or reserved → free)
-                        let emailLine = `• ${formattedDate}: changed from ${oldStatus.toUpperCase()} to ${status.toUpperCase()}`;
+                        isChanged = true;
+                        emailLine = `• ${formattedDate}: changed from ${oldStatus.toUpperCase()} to ${status.toUpperCase()}`;
                         if (status === 'reserved' && newDetails.length > 0) {
                             emailLine += `\n    New: ${newDetails.join(', ')}`;
                         }
                         if (oldStatus === 'reserved' && prevDetails.length > 0) {
                             emailLine += `\n    Was: ${prevDetails.join(', ')}`;
                         }
-                        roomChanges.push(emailLine);
                     } else if (status === 'reserved' && oldStatus === 'reserved') {
-                        // Status stayed reserved — check if details changed
                         const newStr = JSON.stringify(newDetails);
                         const oldStr = JSON.stringify(prevDetails);
                         if (newStr !== oldStr) {
-                            let emailLine = `• ${formattedDate}: reservation details changed`;
+                            isChanged = true;
+                            emailLine = `• ${formattedDate}: reservation details changed`;
                             if (prevDetails.length > 0) {
                                 emailLine += `\n    Was: ${prevDetails.join(', ')}`;
                             }
                             if (newDetails.length > 0) {
                                 emailLine += `\n    Now: ${newDetails.join(', ')}`;
                             }
-                            roomChanges.push(emailLine);
                         }
+                    }
+
+                    if (isChanged) {
+                        roomChanges.push(emailLine);
+                        changedDates[room].add(date);
                     }
                 }
                 if (roomChanges.length > 0) {
@@ -524,8 +544,8 @@ async function main() {
                 }
             }
             if (hasChanges) {
-                // Build reservation cost summary for changed reservations
-                const costSummary = buildReservationCostSummary(output, detailsMap, localDate);
+                // Build reservation cost summary ONLY for changed reservations
+                const costSummary = buildReservationCostSummary(output, detailsMap, localDate, changedDates);
                 if (costSummary) {
                     emailBody += costSummary;
                 }
