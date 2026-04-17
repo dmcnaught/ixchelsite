@@ -377,7 +377,10 @@ function buildReservationCostSummary(output, detailsMap, noticedDateStr, changed
         // Format the day ordinal
         const dayStr = `${startDay}${ordinalSuffix(startDay)}`;
 
-        let line = `Noticed ${noticedFormatted}: ${roomLabel} > ${res.resNumber} ${totalNights} night${totalNights !== 1 ? 's' : ''} from ${dayStr}`;
+        // Month/year context for the reservation start date
+        const startMonth = `${MONTH_NAMES[startD.getMonth()]} ${startD.getFullYear()}`;
+
+        let line = `Noticed ${noticedFormatted}: ${startMonth} ${roomLabel} > ${res.resNumber} ${totalNights} night${totalNights !== 1 ? 's' : ''} from ${dayStr}`;
 
         if (costInfo.monthBreakdown.length === 1) {
             // Single month — just total cost
