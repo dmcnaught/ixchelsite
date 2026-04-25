@@ -524,9 +524,16 @@ async function main() {
                             emailLine += `\n    Was: ${prevDetails.join(', ')}`;
                         }
                     } else if (status === 'reserved' && oldStatus === 'reserved') {
-                        const newStr = JSON.stringify(newDetails);
-                        const oldStr = JSON.stringify(prevDetails);
-                        if (newStr !== oldStr) {
+                        // Compare base reservation numbers (strip -NNN suffixes) to avoid
+                        // false positives when only the suffix changes (e.g., 0108560-001 → 0108560)
+                        const extractBaseResNum = (detail) => {
+                            const match = detail.match(/>\s*(\d+)/);
+                            return match ? match[1] : detail;
+                        };
+                        const newBaseNums = newDetails.map(extractBaseResNum).sort().join(',');
+                        const oldBaseNums = prevDetails.map(extractBaseResNum).sort().join(',');
+
+                        if (newBaseNums !== oldBaseNums) {
                             isChanged = true;
                             emailLine = `• ${formattedDate}: reservation details changed`;
                             if (prevDetails.length > 0) {
