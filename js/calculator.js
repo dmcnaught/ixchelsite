@@ -209,7 +209,9 @@ function calculateStay() {
             'room_type': roomType,
             'total_nights': totalNights,
             'predicted_value': totalCost,
-            'currency': 'USD'
+            'currency': 'USD',
+            'checkin_date': checkinInput.value,
+            'checkout_date': checkoutInput.value
         });
     }
 
@@ -219,7 +221,9 @@ function calculateStay() {
             room_type: roomType,
             total_nights: totalNights,
             value: totalCost,
-            currency: 'USD'
+            currency: 'USD',
+            checkin_date: checkinInput.value,
+            checkout_date: checkoutInput.value
         });
     }
 }
