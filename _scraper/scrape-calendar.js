@@ -328,18 +328,21 @@ function calculateReservationCost(dates, roomType) {
 
 /**
  * Build the cost summary section for the email.
+ * Produces separate "Added" and "Removed" sections.
  * Format example:
  *   Noticed 4-17-26: Room #2603 > 0111111-001 4 nights from 5th $330
  *   Noticed 4-17-26: Room #2604 > 0110859-001 7 nights from 29th, 2 in April $470, 5 in May $345
  *   Noticed 4-17-26: Both Rooms > 0112345-001 5 nights from 10th $670 [Two Bedroom Suite]
  */
-function buildReservationCostSummary(output, detailsMap, noticedDateStr, changedDates = null) {
-    let reservations = groupReservations(detailsMap);
-    if (reservations.length === 0) return null;
+function buildReservationCostSummary(output, detailsMap, noticedDateStr, changedDates = null, oldDetailsMap = null) {
+    // Format the "noticed" date as M-D-YY
+    const nd = new Date(noticedDateStr + 'T12:00:00');
+    const noticedFormatted = `${nd.getMonth() + 1}-${nd.getDate()}-${String(nd.getFullYear()).slice(-2)}`;
 
-    // Filter to only include reservations that overlap with detected changes
-    if (changedDates) {
-        reservations = reservations.filter(res => {
+    // Filter reservations to only those overlapping with changed dates
+    function filterByChangedDates(reservations) {
+        if (!changedDates) return reservations;
+        return reservations.filter(res => {
             if (res.room === 'both') {
                 return res.dates.some(d => (changedDates['2603'] && changedDates['2603'].has(d)) || (changedDates['2604'] && changedDates['2604'].has(d)));
             } else {
@@ -348,62 +351,89 @@ function buildReservationCostSummary(output, detailsMap, noticedDateStr, changed
         });
     }
 
-    if (reservations.length === 0) return null;
+    // Format a list of reservations into summary lines
+    function formatReservationLines(reservations) {
+        const lines = [];
+        for (const res of reservations) {
+            const totalNights = res.dates.length;
+            const startD = new Date(res.startDate + 'T12:00:00');
+            const startDay = startD.getDate();
 
-    // Format the "noticed" date as M-D-YY
-    const nd = new Date(noticedDateStr + 'T12:00:00');
-    const noticedFormatted = `${nd.getMonth() + 1}-${nd.getDate()}-${String(nd.getFullYear()).slice(-2)}`;
+            // Determine room type for pricing
+            let roomType;
+            let roomLabel;
+            if (res.room === 'both') {
+                roomType = 'Two Bedroom Suite';
+                roomLabel = 'Both Rooms';
+            } else {
+                roomType = ROOM_TYPE[res.room];
+                roomLabel = `Room #${res.room}`;
+            }
 
-    const lines = [];
-    for (const res of reservations) {
-        const totalNights = res.dates.length;
-        const startD = new Date(res.startDate + 'T12:00:00');
-        const startDay = startD.getDate();
+            const costInfo = calculateReservationCost(res.dates, roomType);
+            if (!costInfo) continue;
 
-        // Determine room type for pricing
-        let roomType;
-        let roomLabel;
-        if (res.room === 'both') {
-            roomType = 'Two Bedroom Suite';
-            roomLabel = 'Both Rooms';
-        } else {
-            roomType = ROOM_TYPE[res.room];
-            roomLabel = `Room #${res.room}`;
+            // Format the day ordinal
+            const dayStr = `${startDay}${ordinalSuffix(startDay)}`;
+
+            // Month/year context for the reservation start date
+            const startMonth = `${MONTH_NAMES[startD.getMonth()]} ${startD.getFullYear()}`;
+
+            let line = `Noticed ${noticedFormatted}: ${startMonth} ${roomLabel} > ${res.resNumber} ${totalNights} night${totalNights !== 1 ? 's' : ''} from ${dayStr}`;
+
+            if (costInfo.monthBreakdown.length === 1) {
+                // Single month — show per-night rate
+                const perNight = Math.round(costInfo.totalCost / totalNights);
+                line += ` $${perNight.toLocaleString()}`;
+            } else {
+                // Multiple months — per-night rate per month
+                const parts = costInfo.monthBreakdown.map(m => {
+                    const perNight = Math.round(m.cost / m.nights);
+                    return `${m.nights} in ${m.monthName} $${perNight.toLocaleString()}`;
+                });
+                line += `, ${parts.join(', ')}`;
+            }
+
+            if (res.room === 'both') {
+                line += ' [Two Bedroom Suite]';
+            }
+
+            lines.push(line);
         }
-
-        const costInfo = calculateReservationCost(res.dates, roomType);
-        if (!costInfo) continue;
-
-        // Format the day ordinal
-        const dayStr = `${startDay}${ordinalSuffix(startDay)}`;
-
-        // Month/year context for the reservation start date
-        const startMonth = `${MONTH_NAMES[startD.getMonth()]} ${startD.getFullYear()}`;
-
-        let line = `Noticed ${noticedFormatted}: ${startMonth} ${roomLabel} > ${res.resNumber} ${totalNights} night${totalNights !== 1 ? 's' : ''} from ${dayStr}`;
-
-        if (costInfo.monthBreakdown.length === 1) {
-            // Single month — show per-night rate
-            const perNight = Math.round(costInfo.totalCost / totalNights);
-            line += ` $${perNight.toLocaleString()}`;
-        } else {
-            // Multiple months — per-night rate per month
-            const parts = costInfo.monthBreakdown.map(m => {
-                const perNight = Math.round(m.cost / m.nights);
-                return `${m.nights} in ${m.monthName} $${perNight.toLocaleString()}`;
-            });
-            line += `, ${parts.join(', ')}`;
-        }
-
-        if (res.room === 'both') {
-            line += ' [Two Bedroom Suite]';
-        }
-
-        lines.push(line);
+        return lines;
     }
 
-    if (lines.length === 0) return null;
-    return `\n---\nReservations & Costs:\n${lines.join('\n')}\n`;
+    // --- Build current and old reservation lists (filtered to changed dates) ---
+    const currentReservations = filterByChangedDates(groupReservations(detailsMap));
+
+    let addedReservations = currentReservations;
+    let removedReservations = [];
+
+    if (oldDetailsMap) {
+        const oldReservations = filterByChangedDates(groupReservations(oldDetailsMap));
+        const currentResNumbers = new Set(currentReservations.map(r => r.resNumber));
+        const oldResNumbers = new Set(oldReservations.map(r => r.resNumber));
+
+        // Added = in current but not in old
+        addedReservations = currentReservations.filter(r => !oldResNumbers.has(r.resNumber));
+        // Removed = in old but not in current
+        removedReservations = oldReservations.filter(r => !currentResNumbers.has(r.resNumber));
+    }
+
+    const addedLines = formatReservationLines(addedReservations);
+    const removedLines = formatReservationLines(removedReservations);
+
+    if (addedLines.length === 0 && removedLines.length === 0) return null;
+
+    let result = '\n---\n';
+    if (addedLines.length > 0) {
+        result += `Reservations Added:\n${addedLines.join('\n')}\n`;
+    }
+    if (removedLines.length > 0) {
+        if (addedLines.length > 0) result += '\n';
+        result += `Reservations Removed:\n${removedLines.join('\n')}\n`;
+    }
+    return result;
 }
 
 function ordinalSuffix(day) {
@@ -557,7 +587,7 @@ async function main() {
             }
             if (hasChanges) {
                 // Build reservation cost summary ONLY for changed reservations
-                const costSummary = buildReservationCostSummary(output, detailsMap, localDate, changedDates);
+                const costSummary = buildReservationCostSummary(output, detailsMap, localDate, changedDates, oldDetails);
                 if (costSummary) {
                     emailBody += costSummary;
                 }
