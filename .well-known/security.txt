@@ -1,0 +1,6 @@
+# Security contact for ixchel603and604.com
+# See https://securitytxt.org/ for specification
+
+Contact: https://ixchel603and604.com/#contact
+Expires: 2027-05-09T00:00:00.000Z
+Preferred-Languages: en, es
