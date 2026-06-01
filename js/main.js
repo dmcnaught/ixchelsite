@@ -66,6 +66,48 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 100);
 });
 
+// ============================
+//  Meta Pixel: ViewContent Events for Retargeting
+//  Fires once per section per page view when visitor scrolls to key sections.
+//  This gives Facebook better signal to build retargeting audiences.
+// ============================
+(function() {
+    const pixelSections = [
+        { id: 'gallery',    contentName: 'Gallery',       contentCategory: 'Engagement' },
+        { id: 'calculator', contentName: 'Rate Calculator', contentCategory: 'High Intent' },
+        { id: 'contact',    contentName: 'Contact',       contentCategory: 'High Intent' }
+    ];
+
+    const firedSections = new Set();
+
+    const pixelObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting && !firedSections.has(entry.target.id)) {
+                firedSections.add(entry.target.id);
+                const section = pixelSections.find(s => s.id === entry.target.id);
+                if (section && typeof fbq === 'function') {
+                    fbq('track', 'ViewContent', {
+                        content_name: section.contentName,
+                        content_category: section.contentCategory,
+                        content_type: 'product'
+                    });
+                }
+                if (section && typeof gtag === 'function') {
+                    gtag('event', 'view_section', {
+                        section_name: section.contentName,
+                        section_category: section.contentCategory
+                    });
+                }
+            }
+        });
+    }, { threshold: 0.3 });
+
+    pixelSections.forEach(section => {
+        const el = document.getElementById(section.id);
+        if (el) pixelObserver.observe(el);
+    });
+})();
+
 // Handle contact form submission via AJAX to ensure redirect to thanks.html
 // (Formspree's built-in _next redirect was not working, which prevented
 // the Meta Lead pixel event on thanks.html from firing)

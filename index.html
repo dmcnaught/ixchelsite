@@ -182,8 +182,15 @@
 
     <!-- Hero Section -->
     <header class="hero" id="home">
-        <!-- Using high-quality Google Photo for Hero -->
-        <div class="hero-bg" style="background-image: url('https://lh3.googleusercontent.com/pw/AP1GczPI4AY3xLmbQLgW7MeEcIx35pYPcePWwSyDMVv0nOdE59mD6UP-Xfj_MA6KNUxPHgEOXj8cztwLk2H_GdrKQRZcKYOLH1Vn7iZvM20yEILDDUkdOIBl4d-RlFYO3R61nkpSik90_kMPTWxM-aE1lI1Tew=w2592-h1944-s-no-gm')"></div>
+        <!-- Video Background for Hero -->
+        <video class="hero-video" autoplay muted loop playsinline
+               poster="images/hero-sunset-poster.jpg">
+            <!-- Serve smaller 720p to mobile, full 1080p to desktop -->
+            <source src="images/hero-sunset.mp4" media="(min-width: 769px)" type="video/mp4">
+            <source src="images/hero-sunset-sm.mp4" type="video/mp4">
+        </video>
+        <!-- Fallback static image for browsers that don't support video -->
+        <div class="hero-bg" style="background-image: url('images/hero-sunset-poster.jpg')"></div>
         <div class="hero-content reveal">
             <div class="awards-badges">
                 <div class="fb-badge">

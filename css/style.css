@@ -297,6 +297,18 @@ a {
     overflow: hidden;
 }
 
+/* Video background — fills hero, hides letterboxing */
+.hero-video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: -2;
+}
+
+/* Static fallback — hidden when video loads, shown as poster/fallback */
 .hero-bg {
     position: absolute;
     top: 0;
@@ -305,9 +317,7 @@ a {
     height: 100%;
     background-size: cover;
     background-position: center;
-    /* Zoom out effect animation */
-    animation: zoomOut 20s infinite alternate linear;
-    z-index: -2;
+    z-index: -3;
 }
 
 @keyframes zoomOut {

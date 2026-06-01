@@ -233,6 +233,16 @@ function calculateStay() {
             checkin_date: checkinInput.value,
             checkout_date: checkoutInput.value
         });
+        // Also fire standard InitiateCheckout — FB optimizes better on
+        // standard events than custom ones, helping the campaign exit
+        // learning phase faster with more conversion signal.
+        fbq('track', 'InitiateCheckout', {
+            content_name: roomLabel,
+            content_category: roomType,
+            num_items: totalNights,
+            value: totalCost,
+            currency: 'USD'
+        });
     }
 }
 
