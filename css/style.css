@@ -235,8 +235,9 @@ a {
 
 .navbar.scrolled .brand-icon {
     height: 30px;
-    filter: invert(1);
-    mix-blend-mode: multiply;
+    mix-blend-mode: normal;
+    /* Teal filter to match logo text color */
+    filter: invert(35%) sepia(60%) saturate(500%) hue-rotate(145deg) brightness(90%);
 }
 
 
@@ -270,12 +271,9 @@ a {
 .hamburger {
     display: none;
     cursor: pointer;
-    /* Frosted pill background — always readable over any section */
     padding: 8px 10px;
     border-radius: 8px;
-    background: rgba(0, 0, 0, 0.35);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
+    background: rgba(0, 0, 0, 0.55);
     transition: background 0.3s ease;
 }
 
@@ -288,12 +286,13 @@ a {
     background-color: var(--white);
 }
 
+/* Scrolled: teal pill so white bars always pop against white navbar */
 .navbar.scrolled .hamburger {
-    background: rgba(0, 0, 0, 0.08);
+    background: var(--primary);
 }
 
 .navbar.scrolled .hamburger .bar {
-    background-color: var(--text-dark);
+    background-color: var(--white);
 }
 
 /* Hero Section */
