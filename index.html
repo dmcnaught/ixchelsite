@@ -182,13 +182,8 @@
 
     <!-- Hero Section -->
     <header class="hero" id="home">
-        <!-- Video Background for Hero -->
-        <video class="hero-video" autoplay muted loop playsinline
-               poster="images/hero-sunset-poster.jpg">
-            <!-- Serve vertical video to mobile, landscape 1080p to desktop -->
-            <source src="images/hero-sunset.mp4" media="(min-width: 769px)" type="video/mp4">
-            <source src="images/hero-sunset-vertical.mp4" type="video/mp4">
-        </video>
+        <!-- Using high-quality Google Photo for Hero -->
+        <div class="hero-bg" style="background-image: url('https://lh3.googleusercontent.com/pw/AP1GczPI4AY3xLmbQLgW7MeEcIx35pYPcePWwSyDMVv0nOdE59mD6UP-Xfj_MA6KNUxPHgEOXj8cztwLk2H_GdrKQRZcKYOLH1Vn7iZvM20yEILDDUkdOIBl4d-RlFYO3R61nkpSik90_kMPTWxM-aE1lI1Tew=w2592-h1944-s-no-gm')"></div>
         <div class="hero-content reveal">
             <div class="awards-badges">
                 <div class="fb-badge">
@@ -252,6 +247,21 @@
         <div class="divider-content reveal">
             <h2>Magic Moments on Playa Norte</h2>
             <p>Your private balcony awaits the perfect sunset</p>
+        </div>
+    </section>
+
+    <!-- Video Showcase Section -->
+    <section class="video-showcase">
+        <video class="video-showcase-bg" autoplay muted loop playsinline
+               poster="images/hero-sunset-poster.jpg">
+            <source src="images/hero-sunset.mp4" media="(min-width: 769px)" type="video/mp4">
+            <source src="images/hero-sunset-vertical.mp4" type="video/mp4">
+        </video>
+        <div class="video-showcase-overlay"></div>
+        <div class="video-showcase-content reveal">
+            <h3 class="section-subtitle">From Your Balcony</h3>
+            <h2>Sunset Over the Caribbean</h2>
+            <p>Every evening brings a new masterpiece from the 6th floor</p>
         </div>
     </section>
 
