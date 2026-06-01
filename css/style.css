@@ -270,15 +270,26 @@ a {
 .hamburger {
     display: none;
     cursor: pointer;
+    /* Frosted pill background — always readable over any section */
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    transition: background 0.3s ease;
 }
 
 .hamburger .bar {
     display: block;
     width: 25px;
     height: 3px;
-    margin: 5px auto;
+    margin: 4px auto;
     transition: all 0.3s ease-in-out;
     background-color: var(--white);
+}
+
+.navbar.scrolled .hamburger {
+    background: rgba(0, 0, 0, 0.08);
 }
 
 .navbar.scrolled .hamburger .bar {
