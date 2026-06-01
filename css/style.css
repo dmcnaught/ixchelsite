@@ -182,7 +182,7 @@ a {
 }
 
 .navbar.scrolled {
-    background-color: rgba(255, 255, 255, 0.95);
+    background-color: rgba(0, 80, 80, 0.95);
     backdrop-filter: blur(10px);
     padding: 1rem 0;
     box-shadow: var(--shadow-sm);
@@ -223,21 +223,17 @@ a {
     height: 36px;
     width: auto;
     transition: var(--transition);
-    mix-blend-mode: screen;
     flex-shrink: 0;
 }
 
 
 
 .navbar.scrolled .logo {
-    color: var(--primary);
+    color: var(--white);
 }
 
 .navbar.scrolled .brand-icon {
     height: 30px;
-    mix-blend-mode: normal;
-    /* Teal filter to match logo text color */
-    filter: invert(35%) sepia(60%) saturate(500%) hue-rotate(145deg) brightness(90%);
 }
 
 
@@ -261,7 +257,7 @@ a {
 }
 
 .navbar.scrolled .nav-links a:not(.btn-primary-small) {
-    color: var(--text-dark);
+    color: var(--white);
 }
 
 .nav-links a:hover:not(.btn-primary-small) {
@@ -286,9 +282,9 @@ a {
     background-color: var(--white);
 }
 
-/* Scrolled: teal pill so white bars always pop against white navbar */
+/* Scrolled: slightly lighter pill against dark navbar */
 .navbar.scrolled .hamburger {
-    background: var(--primary);
+    background: rgba(255, 255, 255, 0.15);
 }
 
 .navbar.scrolled .hamburger .bar {
