@@ -185,12 +185,10 @@
         <!-- Video Background for Hero -->
         <video class="hero-video" autoplay muted loop playsinline
                poster="images/hero-sunset-poster.jpg">
-            <!-- Serve smaller 720p to mobile, full 1080p to desktop -->
+            <!-- Serve vertical video to mobile, landscape 1080p to desktop -->
             <source src="images/hero-sunset.mp4" media="(min-width: 769px)" type="video/mp4">
-            <source src="images/hero-sunset-sm.mp4" type="video/mp4">
+            <source src="images/hero-sunset-vertical.mp4" type="video/mp4">
         </video>
-        <!-- Fallback static image for browsers that don't support video -->
-        <div class="hero-bg" style="background-image: url('images/hero-sunset-poster.jpg')"></div>
         <div class="hero-content reveal">
             <div class="awards-badges">
                 <div class="fb-badge">
