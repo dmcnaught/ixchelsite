@@ -206,10 +206,40 @@ function calculateStay() {
     }
 
     html += '<p class="calc-fine-print">All rates include taxes. Estimates are based on current published rates and are subject to change. Final pricing will be confirmed at booking.</p>';
+
+    // CTA buttons — this is the key conversion moment
+    html += '<div class="calc-cta-buttons" style="margin-top: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;">';
+    html += `<a href="#contact" class="btn-primary btn-large calc-book-btn" data-dates="${checkinInput.value} to ${checkoutInput.value}" data-room="${roomLabel}" style="text-decoration: none; text-align: center; flex: 1; min-width: 200px;">Book These Dates</a>`;
+    html += '<a href="messenger-redirect.html" target="_blank" rel="noopener noreferrer" class="btn-secondary calc-msg-btn" style="text-decoration: none; text-align: center; flex: 1; min-width: 200px;">Message Us on Facebook</a>';
+    html += '</div>';
+    html += '<p style="text-align: center; margin-top: 0.75rem; font-size: 0.85rem; color: var(--text-light);">We respond to all inquiries personally, usually within a few hours.</p>';
+
     html += '</div>';
 
     showResult(resultDiv, html);
     resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    // Wire up "Book These Dates" CTA to pre-fill the contact form
+    const bookBtn = resultDiv.querySelector('.calc-book-btn');
+    if (bookBtn) {
+        bookBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const datesField = document.querySelector('input[name="dates"]');
+            const messageField = document.querySelector('textarea[name="message"]');
+            if (datesField) {
+                datesField.value = this.dataset.dates;
+            }
+            if (messageField && !messageField.value) {
+                messageField.value = `Hi! I'd like to book ${this.dataset.room} for ${this.dataset.dates}. The estimated total was $${totalCost.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} USD.`;
+            }
+            document.getElementById('contact').scrollIntoView({ behavior: 'smooth' });
+            // Focus the name field so they can start filling in details
+            setTimeout(() => {
+                const nameField = document.querySelector('input[name="name"]');
+                if (nameField) nameField.focus();
+            }, 800);
+        });
+    }
 
     // Track estimate generation in Google Analytics
     if (typeof gtag === 'function') {
