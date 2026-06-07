@@ -171,7 +171,7 @@ function calculateStay() {
             if (avail.available) {
                 html += '<div class="calc-avail calc-avail-yes"><span class="calc-avail-icon">\u2705</span> These dates appear to be available!</div>';
             } else {
-                html += '<div class="calc-avail calc-avail-no"><span class="calc-avail-icon">\u274C</span><span>Some of your selected dates are not available for this room.<br><a href="#contact" class="calc-avail-link">Contact us</a> to see if we can make it work for you.</span></div>';
+                html += '<div class="calc-avail calc-avail-no"><span class="calc-avail-icon">\u274C</span><span>Some of your selected dates are currently reserved — but don\'t give up! General hotel reservations can often be moved to free up this specific room.<br><a href="#contact" class="calc-avail-link">Contact us</a> and we\'ll see what we can do.</span></div>';
             }
         }
     }
