@@ -59,7 +59,12 @@ async function getMonthLabel(page) {
 
 async function navigateToNextMonth(page) {
     await page.click('button.nextPeriod');
-    await page.waitForTimeout(6000); // Wait longer for API to load reservations
+    try {
+        await page.waitForLoadState('networkidle', { timeout: 15000 });
+    } catch (e) {
+        console.warn('  ⚠ Network idle timed out during navigation, using fallback wait.');
+    }
+    await page.waitForTimeout(3000); // Additional buffer for JS rendering
 }
 
 async function scrapeCurrentMonth(page) {
@@ -459,8 +464,8 @@ async function main() {
 
     try {
         await login(page, email, password);
-        await page.goto(ADMIN_URL, { waitUntil: 'domcontentloaded' });
-        await page.waitForTimeout(8000); // Much longer initial wait for the heavy calendar app to initialize
+        await page.goto(ADMIN_URL, { waitUntil: 'networkidle', timeout: 60000 });
+        await page.waitForTimeout(5000); // Wait for the heavy calendar app to render
 
         const localDate = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Cancun' }); // YYYY-MM-DD
         const output = { lastUpdated: localDate, rooms: { '2603': {}, '2604': {} } };
