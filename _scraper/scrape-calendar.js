@@ -464,11 +464,18 @@ async function main() {
     const page = await (await browser.newContext()).newPage();
 
     try {
+        let apiFailedError = null;
+
         // Log network requests so we can debug slow loading in GitHub Actions
         page.on('response', response => {
             const type = response.request().resourceType();
             if (type === 'fetch' || type === 'xhr') {
-                console.log(`  [Network] ${response.status()} ${response.url()}`);
+                const status = response.status();
+                const url = response.url();
+                console.log(`  [Network] ${status} ${url}`);
+                if (url.includes('/admin/disponibilidad/') && status >= 400) {
+                    apiFailedError = `API returned ${status} for ${url}`;
+                }
             }
         });
 
@@ -487,6 +494,11 @@ async function main() {
 
         for (let i = 0; i < MONTHS_TO_SCRAPE; i++) {
             const { monthLabel, data } = await scrapeCurrentMonth(page);
+            
+            if (apiFailedError) {
+                throw new Error(`Backend calendar API failed (${apiFailedError}). Aborting run to protect data.`);
+            }
+
             const parsed = parseMonthLabel(monthLabel);
             if (parsed) {
                 const { year, month } = parsed;
@@ -507,6 +519,8 @@ async function main() {
             } else {
                 console.warn(`  ⚠ Could not parse month: "${monthLabel}"`);
             }
+
+            apiFailedError = null; // Reset for next month navigation
             if (i < MONTHS_TO_SCRAPE - 1) await navigateToNextMonth(page);
         }
 
