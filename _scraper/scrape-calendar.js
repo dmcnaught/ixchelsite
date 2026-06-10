@@ -60,9 +60,10 @@ async function getMonthLabel(page) {
 async function navigateToNextMonth(page) {
     await page.click('button.nextPeriod');
     try {
-        await page.waitForLoadState('networkidle', { timeout: 15000 });
+        await page.waitForLoadState('networkidle', { timeout: 30000 });
     } catch (e) {
-        console.warn('  ⚠ Network idle timed out during navigation, using fallback wait.');
+        console.warn('  ⚠ Network idle timed out during navigation, using long fallback wait.');
+        await page.waitForTimeout(15000); // If networkidle fails, give it 15 solid seconds to load
     }
     await page.waitForTimeout(3000); // Additional buffer for JS rendering
 }
@@ -463,8 +464,21 @@ async function main() {
     const page = await (await browser.newContext()).newPage();
 
     try {
+        // Log network requests so we can debug slow loading in GitHub Actions
+        page.on('response', response => {
+            const type = response.request().resourceType();
+            if (type === 'fetch' || type === 'xhr') {
+                console.log(`  [Network] ${response.status()} ${response.url()}`);
+            }
+        });
+
         await login(page, email, password);
-        await page.goto(ADMIN_URL, { waitUntil: 'networkidle', timeout: 60000 });
+        try {
+            await page.goto(ADMIN_URL, { waitUntil: 'networkidle', timeout: 45000 });
+        } catch (e) {
+            console.warn('  ⚠ Network idle timed out on initial load, using long fallback wait.');
+            await page.waitForTimeout(20000);
+        }
         await page.waitForTimeout(5000); // Wait for the heavy calendar app to render
 
         const localDate = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Cancun' }); // YYYY-MM-DD
