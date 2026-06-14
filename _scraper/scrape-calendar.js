@@ -39,14 +39,25 @@ function decryptJSON(encoded, key) {
     return JSON.parse(plaintext);
 }
 
-async function login(page, email, password) {
-    console.log('Navigating to login page...');
-    await page.goto(LOGIN_URL, { waitUntil: 'domcontentloaded' });
-    await page.fill('#email', email);
-    await page.fill('#password', password);
-    await page.click('button[type="submit"]');
-    await page.waitForURL('**/admin**', { timeout: 15000 });
-    console.log('Login successful!');
+async function login(page, email, password, retries = 3) {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+        try {
+            console.log(`Navigating to login page... (attempt ${attempt}/${retries})`);
+            await page.goto(LOGIN_URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
+            await page.fill('#email', email);
+            await page.fill('#password', password);
+            await page.click('button[type="submit"]');
+            await page.waitForURL('**/admin**', { timeout: 30000 });
+            console.log('Login successful!');
+            return;
+        } catch (err) {
+            console.error(`  ✗ Login attempt ${attempt} failed: ${err.message}`);
+            if (attempt === retries) throw err;
+            const delay = attempt * 15000; // 15s, 30s
+            console.log(`  Retrying in ${delay / 1000}s...`);
+            await page.waitForTimeout(delay);
+        }
+    }
 }
 
 async function getMonthLabel(page) {
@@ -630,8 +641,12 @@ async function main() {
         }
     } catch (err) {
         console.error('Failed:', err.message);
-        await page.screenshot({ path: path.join(__dirname, 'debug.png'), fullPage: true });
-        console.error('Debug screenshot saved to _scraper/debug.png');
+        try {
+            await page.screenshot({ path: path.join(__dirname, 'debug.png'), fullPage: true, timeout: 10000 });
+            console.error('Debug screenshot saved to _scraper/debug.png');
+        } catch (ssErr) {
+            console.error('Could not save debug screenshot:', ssErr.message);
+        }
         process.exit(1);
     } finally {
         await browser.close();
