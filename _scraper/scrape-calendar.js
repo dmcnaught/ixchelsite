@@ -2,6 +2,7 @@ const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { RATES, SEASON_LABELS, MONTH_NAMES, OUR_ROOMS, ROOM_NUMBERS, ROOM_TYPE, getSeason } = require('../js/rates');
 
 const CALENDAR_URL = 'https://ixchelcalendar.com';
 const LOGIN_URL = `${CALENDAR_URL}/login`;
@@ -174,44 +175,8 @@ function parseMonthLabel(label) {
 //  Rate / Cost Calculation
 // ============================
 
-// Nightly rates indexed by season (must stay in sync with js/calculator.js)
-const NIGHTLY_RATES = {
-    'Standard Room':       [380, 255, 180, 165, 180, 335, 268, 189, 173, 189, 352],
-    'One Bedroom Suite':   [470, 345, 270, 255, 270, 415, 362, 284, 268, 284, 436],
-    'Two Bedroom Suite':   [670, 545, 470, 455, 470, 665, 572, 494, 478, 494, 698],
-};
-
-// Room number → room type when booked individually
-const ROOM_TYPE = { '2603': 'Standard Room', '2604': 'One Bedroom Suite' };
-
-const MONTH_NAMES = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-];
-
-function getSeason(date) {
-    const year = date.getFullYear();
-    const month = date.getMonth() + 1;
-    const day = date.getDate();
-
-    if (year >= 2027) {
-        if (year === 2027 && month === 1 && day <= 2) return 5;
-        if ((month === 12 && day >= 21) || (month === 1 && day <= 2)) return 10;
-        if ((month === 1 && day >= 3) || (month >= 2 && month <= 4)) return 6;
-        if (month >= 5 && month <= 8) return 7;
-        if (month >= 9 && month <= 10) return 8;
-        if (month === 11 || (month === 12 && day <= 20)) return 9;
-        return 6;
-    }
-
-    if ((month === 12 && day >= 21) || (month === 1 && day <= 2)) return 5;
-    if ((month === 1 && day >= 3) || (month >= 2 && month <= 4)) return 0;
-    if (month >= 5 && month <= 7) return 1;
-    if (month === 8) return 2;
-    if (month >= 9 && month <= 10) return 3;
-    if (month === 11 || (month === 12 && day <= 20)) return 4;
-    return 0;
-}
+// Alias: scraper code uses NIGHTLY_RATES, shared file exports RATES
+const NIGHTLY_RATES = RATES;
 
 /**
  * Extract reservation number from detail text like "Room #2603 > 0111111-001"
