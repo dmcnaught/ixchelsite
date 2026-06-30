@@ -7,20 +7,20 @@
 //
 // Rate data combined from 2026 and 2027 rate PDF charts
 // Seasons indexed: [2026 Seasons 0-8], [2027 Seasons 9-13]
-// Updated May 20, 2026: May 21-Jun 30 "2nd yield", Nov 1-30 "1st yield"
+// Updated Jun 30, 2026: Jul 1-31 now "2nd yield" (was 1st yield)
 
 const RATES = {
-    "Standard Room":                 [380, 255, 305, 255, 180, 165, 255, 180, 335, 268, 189, 173, 189, 352],
-    "One Bedroom Suite":             [470, 345, 395, 345, 270, 255, 345, 270, 415, 362, 284, 268, 284, 436],
-    "One Bedroom Suite Beachfront":  [520, 395, 445, 395, 320, 305, 395, 320, 505, 415, 336, 320, 336, 530],
-    "One Bedroom Penthouse":         [570, 445, 495, 445, 370, 355, 445, 370, 555, 467, 389, 373, 389, 583],
-    "One Bedroom Premium Penthouse": [610, 485, 535, 485, 410, 395, 485, 410, 605, 509, 431, 415, 431, 635],
-    "Two Bedroom Suite":             [670, 545, 595, 545, 470, 455, 545, 470, 665, 572, 494, 478, 494, 698],
-    "Deluxe Two Bedroom Suite":      [715, 590, 640, 590, 515, 500, 590, 515, 710, 620, 541, 525, 541, 746],
-    "Two Bedroom Suite Beachfront":  [760, 635, 685, 635, 560, 545, 635, 560, 755, 667, 588, 572, 588, 793],
-    "Two Bedroom Penthouse":         [840, 715, 765, 715, 640, 625, 715, 640, 805, 751, 672, 656, 672, 845],
-    "Two Bedroom Premium Penthouse": [1030, 905, 955, 905, 830, 815, 905, 830, 955, 950, 872, 856, 872, 1003],
-    "Three Bedroom Penthouse":       [1135, 1010, 1060, 1010, 935, 920, 1010, 935, 1055, 1061, 982, 966, 982, 1108]
+    "Standard Room":                 [380, 255, 305, 305, 180, 165, 255, 180, 335, 268, 189, 173, 189, 352],
+    "One Bedroom Suite":             [470, 345, 395, 395, 270, 255, 345, 270, 415, 362, 284, 268, 284, 436],
+    "One Bedroom Suite Beachfront":  [520, 395, 445, 445, 320, 305, 395, 320, 505, 415, 336, 320, 336, 530],
+    "One Bedroom Penthouse":         [570, 445, 495, 495, 370, 355, 445, 370, 555, 467, 389, 373, 389, 583],
+    "One Bedroom Premium Penthouse": [610, 485, 535, 535, 410, 395, 485, 410, 605, 509, 431, 415, 431, 635],
+    "Two Bedroom Suite":             [670, 545, 595, 595, 470, 455, 545, 470, 665, 572, 494, 478, 494, 698],
+    "Deluxe Two Bedroom Suite":      [715, 590, 640, 640, 515, 500, 590, 515, 710, 620, 541, 525, 541, 746],
+    "Two Bedroom Suite Beachfront":  [760, 635, 685, 685, 560, 545, 635, 560, 755, 667, 588, 572, 588, 793],
+    "Two Bedroom Penthouse":         [840, 715, 765, 765, 640, 625, 715, 640, 805, 751, 672, 656, 672, 845],
+    "Two Bedroom Premium Penthouse": [1030, 905, 955, 955, 830, 815, 905, 830, 955, 950, 872, 856, 872, 1003],
+    "Three Bedroom Penthouse":       [1135, 1010, 1060, 1060, 935, 920, 1010, 935, 1055, 1061, 982, 966, 982, 1108]
 };
 
 const SEASON_LABELS = [
@@ -83,7 +83,7 @@ function getSeason(date) {
     if ((month === 1 && day >= 3) || (month >= 2 && month <= 4)) return 0;   // High
     if (month === 5 && day <= 20) return 1;                                   // May 1-20 (1st yield)
     if (month === 5 || month === 6) return 2;                                 // May 21-Jun 30 (2nd yield)
-    if (month === 7) return 3;                                                // Jul (1st yield)
+    if (month === 7) return 3;                                                // Jul (2nd yield)
     if (month === 8) return 4;                                                // Aug (rack)
     if (month >= 9 && month <= 10) return 5;                                  // Sep-Oct (rack)
     if (month === 11) return 6;                                               // Nov (1st yield)
