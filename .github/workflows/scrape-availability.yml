@@ -77,4 +77,4 @@ jobs:
         with:
           name: debug-screenshot
           path: _scraper/debug.png
-          retention-days: 3
+          retention-days: 7

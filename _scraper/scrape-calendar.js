@@ -69,15 +69,36 @@ async function getMonthLabel(page) {
     });
 }
 
-async function navigateToNextMonth(page) {
-    await page.click('button.nextPeriod');
-    try {
-        await page.waitForLoadState('networkidle', { timeout: 30000 });
-    } catch (e) {
-        console.warn('  ⚠ Network idle timed out during navigation, using long fallback wait.');
-        await page.waitForTimeout(15000); // If networkidle fails, give it 15 solid seconds to load
+async function waitForCalendarRender(page, previousMonthLabel = null, timeout = 30000) {
+    const start = Date.now();
+    // Wait for calendar day cells to be present
+    await page.waitForSelector('.cv-day', { timeout });
+
+    if (previousMonthLabel) {
+        // Poll until the month label changes from the previous value
+        while (Date.now() - start < timeout) {
+            const currentLabel = await getMonthLabel(page);
+            if (currentLabel && currentLabel !== previousMonthLabel) break;
+            await page.waitForTimeout(500);
+        }
     }
-    await page.waitForTimeout(3000); // Additional buffer for JS rendering
+    // Brief buffer for any remaining JS rendering
+    await page.waitForTimeout(1500);
+}
+
+async function navigateToNextMonth(page, previousMonthLabel, retries = 3) {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+        try {
+            await page.click('button.nextPeriod');
+            await waitForCalendarRender(page, previousMonthLabel);
+            return;
+        } catch (err) {
+            console.warn(`  ⚠ Month navigation attempt ${attempt}/${retries} failed: ${err.message}`);
+            if (attempt === retries) throw err;
+            // Wait before retrying
+            await page.waitForTimeout(5000 * attempt);
+        }
+    }
 }
 
 async function scrapeCurrentMonth(page) {
@@ -456,25 +477,36 @@ async function main() {
         });
 
         await login(page, email, password);
-        try {
-            await page.goto(ADMIN_URL, { waitUntil: 'networkidle', timeout: 45000 });
-        } catch (e) {
-            console.warn('  ⚠ Network idle timed out on initial load, using long fallback wait.');
-            await page.waitForTimeout(20000);
-        }
-        await page.waitForTimeout(5000); // Wait for the heavy calendar app to render
+        await page.goto(ADMIN_URL, { waitUntil: 'domcontentloaded', timeout: 45000 });
+        await waitForCalendarRender(page);
 
         const localDate = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Cancun' }); // YYYY-MM-DD
         const output = { lastUpdated: localDate, rooms: { '2603': {}, '2604': {} } };
         const detailsMap = { '2603': {}, '2604': {} };
 
+        let lastMonthLabel = null;
         for (let i = 0; i < MONTHS_TO_SCRAPE; i++) {
-            const { monthLabel, data } = await scrapeCurrentMonth(page);
-            
-            if (apiFailedError) {
-                throw new Error(`Backend calendar API failed (${apiFailedError}). Aborting run to protect data.`);
+            let monthResult = null;
+            const monthRetries = 3;
+            for (let attempt = 1; attempt <= monthRetries; attempt++) {
+                try {
+                    const { monthLabel, data } = await scrapeCurrentMonth(page);
+
+                    if (apiFailedError) {
+                        throw new Error(`Backend calendar API failed (${apiFailedError}). Aborting run to protect data.`);
+                    }
+
+                    monthResult = { monthLabel, data };
+                    break;
+                } catch (err) {
+                    console.warn(`  ⚠ Scrape attempt ${attempt}/${monthRetries} for month ${i + 1} failed: ${err.message}`);
+                    if (attempt === monthRetries) throw err;
+                    // Wait and retry — the page state should still be on the same month
+                    await page.waitForTimeout(5000 * attempt);
+                }
             }
 
+            const { monthLabel, data } = monthResult;
             const parsed = parseMonthLabel(monthLabel);
             if (parsed) {
                 const { year, month } = parsed;
@@ -496,8 +528,9 @@ async function main() {
                 console.warn(`  ⚠ Could not parse month: "${monthLabel}"`);
             }
 
+            lastMonthLabel = monthLabel;
             apiFailedError = null; // Reset for next month navigation
-            if (i < MONTHS_TO_SCRAPE - 1) await navigateToNextMonth(page);
+            if (i < MONTHS_TO_SCRAPE - 1) await navigateToNextMonth(page, lastMonthLabel);
         }
 
         let oldData = null;
@@ -612,10 +645,28 @@ async function main() {
         } catch (ssErr) {
             console.error('Could not save debug screenshot:', ssErr.message);
         }
-        process.exit(1);
+        throw err; // Re-throw so the top-level retry wrapper can catch and retry
     } finally {
         await browser.close();
     }
 }
 
-main();
+// Top-level retry wrapper: if the entire scrape fails, retry from scratch
+const MAX_RUN_RETRIES = 2;
+(async () => {
+    for (let run = 1; run <= MAX_RUN_RETRIES; run++) {
+        try {
+            await main();
+            return; // Success — exit
+        } catch (err) {
+            if (run < MAX_RUN_RETRIES) {
+                console.warn(`\n⚠ Run attempt ${run}/${MAX_RUN_RETRIES} failed: ${err.message}`);
+                console.warn(`  Retrying entire scrape in 30s...\n`);
+                await new Promise(r => setTimeout(r, 30000));
+            } else {
+                console.error(`\n✗ All ${MAX_RUN_RETRIES} run attempts failed.`);
+                process.exit(1);
+            }
+        }
+    }
+})();
