@@ -82,6 +82,13 @@ async function waitForCalendarRender(page, previousMonthLabel = null, timeout = 
             await page.waitForTimeout(500);
         }
     }
+    // Wait for event data to load — the calendar fetches reservation data via XHR
+    // after the grid renders. Wait for network to settle so .cv-event elements appear.
+    try {
+        await page.waitForLoadState('networkidle', { timeout: 10000 });
+    } catch {
+        // networkidle is best-effort here; if it times out we still continue
+    }
     // Brief buffer for any remaining JS rendering
     await page.waitForTimeout(1500);
 }
@@ -542,6 +549,22 @@ async function main() {
             }
         }
 
+        // --- Sanity check: detect if scrape returned suspiciously few reservations ---
+        const newReservedCount = ROOMS.reduce((sum, room) =>
+            sum + Object.values(output.rooms[room]).filter(v => v === 'reserved').length, 0);
+        if (oldData && oldData.rooms) {
+            const oldReservedCount = ROOMS.reduce((sum, room) =>
+                sum + Object.values(oldData.rooms[room] || {}).filter(v => v === 'reserved').length, 0);
+            console.log(`\nReservation sanity check: old=${oldReservedCount}, new=${newReservedCount}`);
+            if (oldReservedCount > 10 && newReservedCount < oldReservedCount * 0.5) {
+                throw new Error(
+                    `Sanity check failed: reservations dropped from ${oldReservedCount} to ${newReservedCount} ` +
+                    `(${Math.round((1 - newReservedCount / oldReservedCount) * 100)}% drop). ` +
+                    `This likely indicates a scraping issue — aborting to protect data.`
+                );
+            }
+        }
+
         const encKey = getEncryptionKey();
         let oldDetails = null;
         if (fs.existsSync(DETAILS_PATH)) {
@@ -558,7 +581,7 @@ async function main() {
         }
 
         fs.writeFileSync(OUTPUT_PATH, JSON.stringify(output, null, 2));
-        console.log(`\n✓ Written to ${OUTPUT_PATH}`);
+        console.log(`✓ Written to ${OUTPUT_PATH}`);
 
         if (encKey) {
             fs.writeFileSync(DETAILS_PATH, encryptJSON(detailsMap, encKey));
