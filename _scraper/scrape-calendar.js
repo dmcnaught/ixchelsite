@@ -469,6 +469,7 @@ async function main() {
 
     try {
         let apiFailedError = null;
+        let apiResponseReceived = false;
 
         // Log network requests so we can debug slow loading in GitHub Actions
         page.on('response', response => {
@@ -477,8 +478,12 @@ async function main() {
                 const status = response.status();
                 const url = response.url();
                 console.log(`  [Network] ${status} ${url}`);
-                if (url.includes('/admin/disponibilidad/') && status >= 400) {
-                    apiFailedError = `API returned ${status} for ${url}`;
+                if (url.includes('/admin/disponibilidad/')) {
+                    if (status >= 400) {
+                        apiFailedError = `API returned ${status} for ${url}`;
+                    } else {
+                        apiResponseReceived = true;
+                    }
                 }
             }
         });
@@ -499,8 +504,18 @@ async function main() {
                 try {
                     const { monthLabel, data } = await scrapeCurrentMonth(page);
 
+                    // If the API never responded at all, the calendar grid is likely empty — don't trust it
+                    if (!apiResponseReceived && !apiFailedError) {
+                        // Give the response listener a moment to fire (it's async)
+                        for (let wait = 0; wait < 10 && !apiResponseReceived && !apiFailedError; wait++) {
+                            await page.waitForTimeout(1000);
+                        }
+                    }
                     if (apiFailedError) {
                         throw new Error(`Backend calendar API failed (${apiFailedError}). Aborting run to protect data.`);
+                    }
+                    if (!apiResponseReceived) {
+                        throw new Error(`Calendar API never responded for ${monthLabel}. The calendar grid is likely empty.`);
                     }
 
                     monthResult = { monthLabel, data };
@@ -537,7 +552,10 @@ async function main() {
 
             lastMonthLabel = monthLabel;
             apiFailedError = null; // Reset for next month navigation
-            if (i < MONTHS_TO_SCRAPE - 1) await navigateToNextMonth(page, lastMonthLabel);
+            apiResponseReceived = false; // Reset — need fresh API response for next month
+            if (i < MONTHS_TO_SCRAPE - 1) {
+                await navigateToNextMonth(page, lastMonthLabel);
+            }
         }
 
         let oldData = null;
