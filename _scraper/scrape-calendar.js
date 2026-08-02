@@ -69,7 +69,7 @@ async function getMonthLabel(page) {
     });
 }
 
-async function waitForCalendarRender(page, previousMonthLabel = null, timeout = 30000) {
+async function waitForCalendarRender(page, previousMonthLabel = null, timeout = 30000, apiReady = null) {
     const start = Date.now();
     // Wait for calendar day cells to be present
     await page.waitForSelector('.cv-day', { timeout });
@@ -82,22 +82,26 @@ async function waitForCalendarRender(page, previousMonthLabel = null, timeout = 
             await page.waitForTimeout(500);
         }
     }
-    // Wait for event data to load — the calendar fetches reservation data via XHR
-    // after the grid renders. Wait for network to settle so .cv-event elements appear.
-    try {
-        await page.waitForLoadState('networkidle', { timeout: 10000 });
-    } catch {
-        // networkidle is best-effort here; if it times out we still continue
+    // Wait for the calendar API response before proceeding — this is the critical
+    // gate that ensures reservation data is loaded into the DOM before we scrape.
+    if (apiReady) {
+        const apiTimeout = 30000;
+        const apiStart = Date.now();
+        while (Date.now() - apiStart < apiTimeout) {
+            const { received, failed } = apiReady();
+            if (received || failed) break;
+            await page.waitForTimeout(500);
+        }
     }
-    // Brief buffer for any remaining JS rendering
-    await page.waitForTimeout(1500);
+    // Brief buffer for JS to render the API response data into DOM elements
+    await page.waitForTimeout(2000);
 }
 
-async function navigateToNextMonth(page, previousMonthLabel, retries = 3) {
+async function navigateToNextMonth(page, previousMonthLabel, retries = 3, apiReady = null) {
     for (let attempt = 1; attempt <= retries; attempt++) {
         try {
             await page.click('button.nextPeriod');
-            await waitForCalendarRender(page, previousMonthLabel);
+            await waitForCalendarRender(page, previousMonthLabel, 30000, apiReady);
             return;
         } catch (err) {
             console.warn(`  ⚠ Month navigation attempt ${attempt}/${retries} failed: ${err.message}`);
@@ -488,9 +492,12 @@ async function main() {
             }
         });
 
+        // Helper to check API response state — passed into waitForCalendarRender
+        const apiReady = () => ({ received: apiResponseReceived, failed: !!apiFailedError });
+
         await login(page, email, password);
         await page.goto(ADMIN_URL, { waitUntil: 'domcontentloaded', timeout: 45000 });
-        await waitForCalendarRender(page);
+        await waitForCalendarRender(page, null, 30000, apiReady);
 
         const localDate = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Cancun' }); // YYYY-MM-DD
         const output = { lastUpdated: localDate, rooms: { '2603': {}, '2604': {} } };
@@ -502,21 +509,15 @@ async function main() {
             const monthRetries = 3;
             for (let attempt = 1; attempt <= monthRetries; attempt++) {
                 try {
-                    const { monthLabel, data } = await scrapeCurrentMonth(page);
-
-                    // If the API never responded at all, the calendar grid is likely empty — don't trust it
-                    if (!apiResponseReceived && !apiFailedError) {
-                        // Give the response listener a moment to fire (it's async)
-                        for (let wait = 0; wait < 10 && !apiResponseReceived && !apiFailedError; wait++) {
-                            await page.waitForTimeout(1000);
-                        }
-                    }
+                    // Safety net: verify API state before scraping (primary wait is in waitForCalendarRender)
                     if (apiFailedError) {
                         throw new Error(`Backend calendar API failed (${apiFailedError}). Aborting run to protect data.`);
                     }
                     if (!apiResponseReceived) {
-                        throw new Error(`Calendar API never responded for ${monthLabel}. The calendar grid is likely empty.`);
+                        throw new Error(`Calendar API never responded for month ${i + 1}. The calendar grid is likely empty.`);
                     }
+
+                    const { monthLabel, data } = await scrapeCurrentMonth(page);
 
                     monthResult = { monthLabel, data };
                     break;
@@ -554,7 +555,7 @@ async function main() {
             apiFailedError = null; // Reset for next month navigation
             apiResponseReceived = false; // Reset — need fresh API response for next month
             if (i < MONTHS_TO_SCRAPE - 1) {
-                await navigateToNextMonth(page, lastMonthLabel);
+                await navigateToNextMonth(page, lastMonthLabel, 3, apiReady);
             }
         }
 
