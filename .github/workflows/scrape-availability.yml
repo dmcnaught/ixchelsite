@@ -2,8 +2,9 @@ name: Scrape Availability
 
 on:
   schedule:
-    # Run daily at 6:00 AM UTC (midnight CST)
-    - cron: '0 6 * * *'
+    # Run daily at 4:15 AM Mountain Time (America/Denver)
+    - cron: '15 4 * * *'
+      timezone: 'America/Denver'
   workflow_dispatch: # Allow manual trigger
 
 permissions:
