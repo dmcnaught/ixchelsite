@@ -20,6 +20,9 @@
     
     <!-- Canonical URL -->
     <link rel="canonical" href="https://ixchel603and604.com/">
+
+    <!-- Cloudflare Turnstile -->
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -533,7 +536,6 @@
                     <p>No Facebook? No problem.<br>Fill out the form and we'll get back to you promptly.</p>
                     <form action="https://formspree.io/f/meerzwbv" method="POST" class="contact-form" id="contact-form">
                         <input type="hidden" name="_next" value="https://ixchel603and604.com/thanks.html">
-                        <input type="text" name="_gotcha" style="display:none" tabindex="-1" autocomplete="off">
                         <div class="form-group">
                             <input type="text" name="name" placeholder="Your Name" required>
                         </div>
@@ -546,6 +548,7 @@
                         <div class="form-group">
                             <textarea name="message" placeholder="Questions, special requests..." rows="6" required></textarea>
                         </div>
+                        <div class="cf-turnstile" data-sitekey="0x4AAAAAAFPy4Jws6aZlUJCi" data-theme="light"></div>
                         <button type="submit" class="btn-primary btn-large" style="width: 100%; cursor: pointer;">Send Message</button>
                     </form>
                 </div>
