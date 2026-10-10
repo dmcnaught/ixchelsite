@@ -1,11 +1,7 @@
 name: Scrape Availability
 
 on:
-  schedule:
-    # Scheduled for 2:30 AM MT to factor in ~1h45m runner queue delay (targeting ~4:15 AM MT execution)
-    - cron: '30 2 * * *'
-      timezone: 'America/Denver'
-  workflow_dispatch: # Allow manual trigger
+  workflow_dispatch: # Triggered via external cron or manual run
 
 permissions:
   contents: write
