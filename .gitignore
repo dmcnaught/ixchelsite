@@ -6,3 +6,4 @@ _scraper/debug.png
 .DS_Store
 *.pdf
 _marketing/
+.tmp.driveupload/

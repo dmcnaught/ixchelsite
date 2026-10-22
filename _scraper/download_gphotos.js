@@ -50,12 +50,21 @@ async function scrapeAlbum(url, prefix) {
                 const match = el.style.backgroundImage.match(/url\("?(https:\/\/lh3\.googleusercontent\.com\/[^"]+)"?\)/);
                 if (match) src = match[1];
             }
-            if (src && src.includes('lh3.googleusercontent.com')) {
-                // Remove resizing parameters to get the uncropped/high-res version where possible
-                // e.g., =w...-h...-no
-                const cleanSrc = src.split('=')[0] + '=w2400-h1800-s-no-gm';
-                if (!links.includes(cleanSrc)) {
-                    links.push(cleanSrc);
+            if (src) {
+                let isValidHost = false;
+                try {
+                    const parsed = new URL(src, window.location.href);
+                    isValidHost = parsed.hostname === 'lh3.googleusercontent.com' || parsed.hostname.endsWith('.googleusercontent.com');
+                } catch (e) {
+                    isValidHost = false;
+                }
+                if (isValidHost) {
+                    // Remove resizing parameters to get the uncropped/high-res version where possible
+                    // e.g., =w...-h...-no
+                    const cleanSrc = src.split('=')[0] + '=w2400-h1800-s-no-gm';
+                    if (!links.includes(cleanSrc)) {
+                        links.push(cleanSrc);
+                    }
                 }
             }
         }

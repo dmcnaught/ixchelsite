@@ -4,6 +4,15 @@
 // Availability data (loaded from JSON)
 let availabilityData = null;
 
+function escapeHtml(str) {
+    return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 function formatDate(date) {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
@@ -50,7 +59,7 @@ function calculateStay() {
     const roomSelect = document.getElementById('calc-room');
     const resultDiv = document.getElementById('calc-result');
 
-    if (!checkinInput.value || !checkoutInput.value) {
+    if (!checkinInput.value || !checkoutInput.value || !/^\d{4}-\d{2}-\d{2}$/.test(checkinInput.value) || !/^\d{4}-\d{2}-\d{2}$/.test(checkoutInput.value)) {
         showResult(resultDiv, '<p class="calc-error">Please select both check-in and check-out dates.</p>');
         return;
     }
@@ -65,6 +74,10 @@ function calculateStay() {
 
     const roomType = roomSelect.value;
     const rates = RATES[roomType];
+    if (!rates) {
+        showResult(resultDiv, '<p class="calc-error">Please select a valid room type.</p>');
+        return;
+    }
 
     // Calculate per-night costs grouped by season
     const breakdown = {};
@@ -87,6 +100,9 @@ function calculateStay() {
     // Build result HTML
     const isOurRoom = OUR_ROOMS.includes(roomType);
     const roomLabel = isOurRoom ? OUR_ROOM_LABELS[roomType] : roomType;
+    const safeRoomLabel = escapeHtml(roomLabel);
+    const safeCheckinVal = escapeHtml(checkinInput.value);
+    const safeCheckoutVal = escapeHtml(checkoutInput.value);
 
     let html = '<div class="calc-result-inner">';
 
@@ -103,7 +119,7 @@ function calculateStay() {
     }
 
     html += '<h4>Estimated Cost</h4>';
-    html += `<p class="calc-room-label">${roomLabel}</p>`;
+    html += `<p class="calc-room-label">${safeRoomLabel}</p>`;
     html += `<p class="calc-dates">${formatDate(checkin)} &rarr; ${formatDate(checkout)} &middot; ${totalNights} night${totalNights !== 1 ? 's' : ''}</p>`;
 
     // Breakdown table
@@ -135,7 +151,7 @@ function calculateStay() {
 
     // CTA buttons — this is the key conversion moment
     html += '<div class="calc-cta-buttons" style="margin-top: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;">';
-    html += `<a href="#contact" class="btn-primary btn-large calc-book-btn" data-dates="${checkinInput.value} to ${checkoutInput.value}" data-room="${roomLabel}" style="text-decoration: none; text-align: center; flex: 1; min-width: 200px;">Book These Dates</a>`;
+    html += `<a href="#contact" class="btn-primary btn-large calc-book-btn" data-dates="${safeCheckinVal} to ${safeCheckoutVal}" data-room="${safeRoomLabel}" style="text-decoration: none; text-align: center; flex: 1; min-width: 200px;">Book These Dates</a>`;
     html += '<a href="messenger-redirect.html" target="_blank" rel="noopener noreferrer" class="btn-secondary calc-msg-btn" style="text-decoration: none; text-align: center; flex: 1; min-width: 200px;">Message Us on Facebook</a>';
     html += '</div>';
     html += '<p style="text-align: center; margin-top: 0.75rem; font-size: 0.85rem; color: var(--text-light);">We respond to all inquiries personally, usually within a few hours.</p>';
