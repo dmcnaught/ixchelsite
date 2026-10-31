@@ -219,6 +219,29 @@ function extractReservationNumber(detailText) {
 }
 
 /**
+ * Extract base reservation number (strip suffix like -001, -002)
+ */
+function extractBaseResNumber(resNum) {
+    if (!resNum) return null;
+    const match = resNum.match(/^(\d+)/);
+    return match ? match[1] : resNum;
+}
+
+/**
+ * Check if two sorted date arrays overlap or are within maxGapDays of each other
+ */
+function areDatesAdjacentOrOverlapping(datesA, datesB, maxGapDays = 14) {
+    if (!datesA || !datesA.length || !datesB || !datesB.length) return false;
+    const startA = new Date(datesA[0] + 'T12:00:00');
+    const endA = new Date(datesA[datesA.length - 1] + 'T12:00:00');
+    const startB = new Date(datesB[0] + 'T12:00:00');
+    const endB = new Date(datesB[datesB.length - 1] + 'T12:00:00');
+    const gap1 = (startB - endA) / 86400000;
+    const gap2 = (startA - endB) / 86400000;
+    return gap1 <= maxGapDays && gap2 <= maxGapDays;
+}
+
+/**
  * Build grouped reservation objects from the full detailsMap.
  * Returns an array of { resNumber, room, dates[], startDate, endDate }.
  * When both rooms share the same reservation number on overlapping dates,
@@ -342,112 +365,230 @@ function calculateReservationCost(dates, roomType) {
 
 /**
  * Build the cost summary section for the email.
- * Produces separate "Added" and "Removed" sections.
- * Format example:
+ * Produces separate "Added", "Changed", and "Removed" sections.
+ * Format examples:
  *   Noticed 4-17-26: Room #2603 > 0111111-001 4 nights from 5th $330
  *   Noticed 4-17-26: Room #2604 > 0110859-001 7 nights from 29th, 2 in April $470, 5 in May $345
  *   Noticed 4-17-26: Both Rooms > 0112345-001 5 nights from 10th $670 [Two Bedroom Suite]
+ *   Noticed 10-31-26: October 2026 Room #2604 > 0111215-001 4 nights from 31st, 1 in October $255, 3 in November $395 (was: 5 nights from 30th, 2 in October $255, 3 in November $395)
  */
 function buildReservationCostSummary(output, detailsMap, noticedDateStr, changedDates = null, oldDetailsMap = null) {
     // Format the "noticed" date as M-D-YY
     const nd = new Date(noticedDateStr + 'T12:00:00');
     const noticedFormatted = `${nd.getMonth() + 1}-${nd.getDate()}-${String(nd.getFullYear()).slice(-2)}`;
 
-    // Filter reservations to only those overlapping with changed dates
-    function filterByChangedDates(reservations) {
-        if (!changedDates) return reservations;
-        return reservations.filter(res => {
-            if (res.room === 'both') {
-                return res.dates.some(d => (changedDates['2603'] && changedDates['2603'].has(d)) || (changedDates['2604'] && changedDates['2604'].has(d)));
-            } else {
-                return res.dates.some(d => changedDates[res.room] && changedDates[res.room].has(d));
-            }
-        });
+    // Check if a reservation overlaps with any detected date changes
+    function overlapsChangedDates(res) {
+        if (!changedDates) return true;
+        if (res.room === 'both') {
+            return res.dates.some(d =>
+                (changedDates['2603'] && changedDates['2603'].has(d)) ||
+                (changedDates['2604'] && changedDates['2604'].has(d))
+            );
+        } else {
+            return res.dates.some(d => changedDates[res.room] && changedDates[res.room].has(d));
+        }
     }
 
-    // Format a list of reservations into summary lines
-    function formatReservationLines(reservations) {
-        const lines = [];
-        for (const res of reservations) {
-            const totalNights = res.dates.length;
-            const startD = new Date(res.startDate + 'T12:00:00');
-            const startDay = startD.getDate();
+    // Format a single reservation line with full details
+    function formatReservationLine(res) {
+        const totalNights = res.dates.length;
+        const startD = new Date(res.startDate + 'T12:00:00');
+        const startDay = startD.getDate();
 
-            // Determine room type for pricing
-            let roomType;
-            let roomLabel;
-            if (res.room === 'both') {
-                roomType = 'Two Bedroom Suite';
-                roomLabel = 'Both Rooms';
-            } else {
-                roomType = ROOM_TYPE[res.room];
-                roomLabel = `Room #${res.room}`;
-            }
+        let roomType;
+        let roomLabel;
+        if (res.room === 'both') {
+            roomType = 'Two Bedroom Suite';
+            roomLabel = 'Both Rooms';
+        } else {
+            roomType = ROOM_TYPE[res.room];
+            roomLabel = `Room #${res.room}`;
+        }
 
-            const costInfo = calculateReservationCost(res.dates, roomType);
-            if (!costInfo) continue;
+        const costInfo = calculateReservationCost(res.dates, roomType);
+        if (!costInfo) return null;
 
-            // Format the day ordinal
-            const dayStr = `${startDay}${ordinalSuffix(startDay)}`;
+        const dayStr = `${startDay}${ordinalSuffix(startDay)}`;
+        const startMonth = `${MONTH_NAMES[startD.getMonth()]} ${startD.getFullYear()}`;
 
-            // Month/year context for the reservation start date
-            const startMonth = `${MONTH_NAMES[startD.getMonth()]} ${startD.getFullYear()}`;
+        let line = `Noticed ${noticedFormatted}: ${startMonth} ${roomLabel} > ${res.resNumber} ${totalNights} night${totalNights !== 1 ? 's' : ''} from ${dayStr}`;
 
-            let line = `Noticed ${noticedFormatted}: ${startMonth} ${roomLabel} > ${res.resNumber} ${totalNights} night${totalNights !== 1 ? 's' : ''} from ${dayStr}`;
+        if (costInfo.monthBreakdown.length === 1) {
+            const perNight = Math.round(costInfo.totalCost / totalNights);
+            line += ` $${perNight.toLocaleString()}`;
+        } else {
+            const parts = costInfo.monthBreakdown.map(m => {
+                const perNight = Math.round(m.cost / m.nights);
+                return `${m.nights} in ${m.monthName} $${perNight.toLocaleString()}`;
+            });
+            line += `, ${parts.join(', ')}`;
+        }
 
+        if (res.room === 'both') {
+            line += ' [Two Bedroom Suite]';
+        }
+
+        return line;
+    }
+
+    // Format brief details of a reservation (for "was: ..." in changed section)
+    function formatReservationBrief(res) {
+        const totalNights = res.dates.length;
+        const startD = new Date(res.startDate + 'T12:00:00');
+        const startDay = startD.getDate();
+        const dayStr = `${startDay}${ordinalSuffix(startDay)}`;
+
+        let roomType = res.room === 'both' ? 'Two Bedroom Suite' : ROOM_TYPE[res.room];
+        const costInfo = calculateReservationCost(res.dates, roomType);
+
+        let costPart = '';
+        if (costInfo) {
             if (costInfo.monthBreakdown.length === 1) {
-                // Single month — show per-night rate
                 const perNight = Math.round(costInfo.totalCost / totalNights);
-                line += ` $${perNight.toLocaleString()}`;
+                costPart = ` $${perNight.toLocaleString()}`;
             } else {
-                // Multiple months — per-night rate per month
                 const parts = costInfo.monthBreakdown.map(m => {
                     const perNight = Math.round(m.cost / m.nights);
                     return `${m.nights} in ${m.monthName} $${perNight.toLocaleString()}`;
                 });
-                line += `, ${parts.join(', ')}`;
+                costPart = `, ${parts.join(', ')}`;
             }
-
-            if (res.room === 'both') {
-                line += ' [Two Bedroom Suite]';
-            }
-
-            lines.push(line);
         }
-        return lines;
+
+        return `${totalNights} night${totalNights !== 1 ? 's' : ''} from ${dayStr}${costPart}`;
     }
 
-    // --- Build current and old reservation lists (filtered to changed dates) ---
-    const currentReservations = filterByChangedDates(groupReservations(detailsMap));
+    // Format a changed reservation showing new details and what changed
+    function formatChangedReservationLine(newRes, oldRes) {
+        const currentLine = formatReservationLine(newRes);
+        if (!currentLine) return null;
 
-    let addedReservations = currentReservations;
-    let removedReservations = [];
+        let wasDesc = formatReservationBrief(oldRes);
+        const oldStartD = new Date(oldRes.startDate + 'T12:00:00');
+        const newStartD = new Date(newRes.startDate + 'T12:00:00');
+        const oldStartMonth = `${MONTH_NAMES[oldStartD.getMonth()]} ${oldStartD.getFullYear()}`;
+        const newStartMonth = `${MONTH_NAMES[newStartD.getMonth()]} ${newStartD.getFullYear()}`;
 
-    if (oldDetailsMap) {
-        const oldReservations = filterByChangedDates(groupReservations(oldDetailsMap));
-        const currentResNumbers = new Set(currentReservations.map(r => r.resNumber));
-        const oldResNumbers = new Set(oldReservations.map(r => r.resNumber));
+        if (oldRes.room !== newRes.room) {
+            const oldRoomLabel = oldRes.room === 'both' ? 'Both Rooms' : `Room #${oldRes.room}`;
+            wasDesc = `${oldRoomLabel} ${wasDesc}`;
+        }
+        if (oldStartMonth !== newStartMonth) {
+            wasDesc = `${oldStartMonth} ${wasDesc}`;
+        }
 
-        // Added = in current but not in old
-        addedReservations = currentReservations.filter(r => !oldResNumbers.has(r.resNumber));
-        // Removed = in old but not in current
-        removedReservations = oldReservations.filter(r => !currentResNumbers.has(r.resNumber));
+        return `${currentLine} (was: ${wasDesc})`;
     }
 
-    const addedLines = formatReservationLines(addedReservations);
-    const removedLines = formatReservationLines(removedReservations);
+    const allCurrent = groupReservations(detailsMap);
+    const allOld = oldDetailsMap ? groupReservations(oldDetailsMap) : [];
 
-    if (addedLines.length === 0 && removedLines.length === 0) return null;
+    if (!oldDetailsMap) {
+        const added = allCurrent.filter(overlapsChangedDates);
+        const lines = added.map(formatReservationLine).filter(Boolean);
+        if (lines.length === 0) return null;
+        return `\n---\nReservations Added:\n${lines.join('\n')}\n`;
+    }
 
-    let result = '\n---\n';
+    const matchedOldIndices = new Set();
+    const matchedPairs = []; // { currentRes, oldRes }
+    const unmatchedCurrent = [];
+
+    // Pass 1: exact resNumber match
+    for (const cRes of allCurrent) {
+        let matchIdx = null;
+        for (let i = 0; i < allOld.length; i++) {
+            if (matchedOldIndices.has(i)) continue;
+            const oRes = allOld[i];
+            const roomOrDateCompatible = (oRes.room === cRes.room || oRes.room === 'both' || cRes.room === 'both' || areDatesAdjacentOrOverlapping(oRes.dates, cRes.dates));
+            if (oRes.resNumber === cRes.resNumber && roomOrDateCompatible) {
+                matchIdx = i;
+                break;
+            }
+        }
+        if (matchIdx !== null) {
+            matchedOldIndices.add(matchIdx);
+            matchedPairs.push({ currentRes: cRes, oldRes: allOld[matchIdx] });
+        } else {
+            unmatchedCurrent.push(cRes);
+        }
+    }
+
+    // Pass 2: base resNumber match (suffix changed) with adjacent/overlapping dates
+    const stillUnmatchedCurrent = [];
+    for (const cRes of unmatchedCurrent) {
+        let matchIdx = null;
+        const cBase = extractBaseResNumber(cRes.resNumber);
+        for (let i = 0; i < allOld.length; i++) {
+            if (matchedOldIndices.has(i)) continue;
+            const oRes = allOld[i];
+            const oBase = extractBaseResNumber(oRes.resNumber);
+            const roomOrDateCompatible = (oRes.room === cRes.room || oRes.room === 'both' || cRes.room === 'both' || areDatesAdjacentOrOverlapping(oRes.dates, cRes.dates));
+            if (cBase && oBase && cBase === oBase && roomOrDateCompatible && areDatesAdjacentOrOverlapping(oRes.dates, cRes.dates)) {
+                matchIdx = i;
+                break;
+            }
+        }
+        if (matchIdx !== null) {
+            matchedOldIndices.add(matchIdx);
+            matchedPairs.push({ currentRes: cRes, oldRes: allOld[matchIdx] });
+        } else {
+            stillUnmatchedCurrent.push(cRes);
+        }
+    }
+
+    const addedReservations = [];
+    const changedReservations = [];
+    const removedReservations = [];
+
+    // Check matched reservations for changes
+    for (const { currentRes, oldRes } of matchedPairs) {
+        const datesEqual = currentRes.dates.length === oldRes.dates.length &&
+            currentRes.dates.every((d, idx) => d === oldRes.dates[idx]);
+        const roomEqual = currentRes.room === oldRes.room;
+
+        if (!datesEqual || !roomEqual) {
+            if (overlapsChangedDates(currentRes) || overlapsChangedDates(oldRes)) {
+                changedReservations.push({ currentRes, oldRes });
+            }
+        }
+    }
+
+    // Check newly added reservations
+    for (const cRes of stillUnmatchedCurrent) {
+        if (overlapsChangedDates(cRes)) {
+            addedReservations.push(cRes);
+        }
+    }
+
+    // Check removed reservations
+    for (let i = 0; i < allOld.length; i++) {
+        if (!matchedOldIndices.has(i)) {
+            const oRes = allOld[i];
+            if (overlapsChangedDates(oRes)) {
+                removedReservations.push(oRes);
+            }
+        }
+    }
+
+    const addedLines = addedReservations.map(formatReservationLine).filter(Boolean);
+    const changedLines = changedReservations.map(({ currentRes, oldRes }) => formatChangedReservationLine(currentRes, oldRes)).filter(Boolean);
+    const removedLines = removedReservations.map(formatReservationLine).filter(Boolean);
+
+    const sections = [];
     if (addedLines.length > 0) {
-        result += `Reservations Added:\n${addedLines.join('\n')}\n`;
+        sections.push(`Reservations Added:\n${addedLines.join('\n')}`);
+    }
+    if (changedLines.length > 0) {
+        sections.push(`Reservations Changed:\n${changedLines.join('\n')}`);
     }
     if (removedLines.length > 0) {
-        if (addedLines.length > 0) result += '\n';
-        result += `Reservations Removed:\n${removedLines.join('\n')}\n`;
+        sections.push(`Reservations Removed:\n${removedLines.join('\n')}`);
     }
-    return result;
+
+    if (sections.length === 0) return null;
+    return '\n---\n' + sections.join('\n\n') + '\n';
 }
 
 function ordinalSuffix(day) {
