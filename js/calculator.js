@@ -171,8 +171,12 @@ function calculateStay() {
             if (datesField) {
                 datesField.value = this.dataset.dates;
             }
+            const quoteField = document.getElementById('estimated_quote');
+            if (quoteField) {
+                quoteField.value = `$${totalCost.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} USD (${this.dataset.room})`;
+            }
             if (messageField && !messageField.value) {
-                messageField.value = `Hi! I'd like to book ${this.dataset.room} for ${this.dataset.dates}. The estimated total was $${totalCost.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} USD.`;
+                messageField.value = `Hi! I would like to check availability and book the ${this.dataset.room} for ${this.dataset.dates}.`;
             }
             document.getElementById('contact').scrollIntoView({ behavior: 'smooth' });
             // Focus the name field so they can start filling in details
