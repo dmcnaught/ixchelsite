@@ -2,7 +2,7 @@ const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { RATES, SEASON_LABELS, MONTH_NAMES, OUR_ROOMS, ROOM_NUMBERS, ROOM_TYPE, getSeason } = require('../js/rates');
+const { RATES, SEASON_LABELS, MONTH_NAMES, OUR_ROOMS, ROOM_NUMBERS, ROOM_TYPE, getSeason, RATE_SCHEDULES, getRateSchedule, getCurrentRateSchedule } = require('../js/rates');
 
 const CALENDAR_URL = 'https://ixchelcalendar.com';
 const LOGIN_URL = `${CALENDAR_URL}/login`;
@@ -232,10 +232,10 @@ function extractBaseResNumber(resNum) {
  */
 function areDatesAdjacentOrOverlapping(datesA, datesB, maxGapDays = 14) {
     if (!datesA || !datesA.length || !datesB || !datesB.length) return false;
-    const startA = new Date(datesA[0] + 'T12:00:00');
-    const endA = new Date(datesA[datesA.length - 1] + 'T12:00:00');
-    const startB = new Date(datesB[0] + 'T12:00:00');
-    const endB = new Date(datesB[datesB.length - 1] + 'T12:00:00');
+    const startA = new Date(datesA[0] + 'T12:00:00Z');
+    const endA = new Date(datesA[datesA.length - 1] + 'T12:00:00Z');
+    const startB = new Date(datesB[0] + 'T12:00:00Z');
+    const endB = new Date(datesB[datesB.length - 1] + 'T12:00:00Z');
     const gap1 = (startB - endA) / 86400000;
     const gap2 = (startA - endB) / 86400000;
     return gap1 <= maxGapDays && gap2 <= maxGapDays;
@@ -273,8 +273,8 @@ function groupReservations(detailsMap) {
         let prevDate = null;
 
         for (const entry of roomEntries) {
-            const entryDate = new Date(entry.dateStr + 'T12:00:00');
-            const isConsecutive = prevDate && ((entryDate - prevDate) === 86400000); // 1 day in ms
+            const entryDate = new Date(entry.dateStr + 'T12:00:00Z');
+            const isConsecutive = prevDate && (Math.round((entryDate - prevDate) / 86400000) === 1);
 
             if (currentGroup && currentGroup.resNumber === entry.resNumber && isConsecutive) {
                 currentGroup.dates.add(entry.dateStr);
@@ -335,32 +335,58 @@ function groupReservations(detailsMap) {
 }
 
 /**
- * Calculate the cost for a reservation, optionally split by month.
- * Returns { totalCost, monthBreakdown: [{ monthName, nights, cost }] }
+ * Calculate the cost for a reservation, comparing estimated rate at booking time
+ * against current active rates.
+ * Returns { totalCost, currentTotalCost, hasRateDiff, monthBreakdown: [{ monthName, nights, cost, currentCost, hasDiff }] }
  */
-function calculateReservationCost(dates, roomType) {
-    const rates = NIGHTLY_RATES[roomType];
-    if (!rates) return null;
+function calculateReservationCost(dates, roomType, resNumber = null) {
+    if (!RATES[roomType]) return null;
+
+    const estSchedule = getRateSchedule(resNumber);
+    const curSchedule = getCurrentRateSchedule();
 
     let totalCost = 0;
-    const byMonth = {}; // "YYYY-MM" → { monthName, nights, cost }
+    let currentTotalCost = 0;
+    const byMonth = {}; // "YYYY-MM" → { monthName, nights, cost, currentCost }
 
     for (const dateStr of dates) {
         const d = new Date(dateStr + 'T12:00:00');
-        const season = getSeason(d);
-        const nightly = rates[season];
-        totalCost += nightly;
+        const estNightly = estSchedule.getNightlyRate(d, roomType);
+        const curNightly = curSchedule.getNightlyRate(d, roomType);
+
+        if (estNightly === null || curNightly === null) return null;
+
+        totalCost += estNightly;
+        currentTotalCost += curNightly;
 
         const monthKey = dateStr.substring(0, 7); // "YYYY-MM"
         if (!byMonth[monthKey]) {
-            byMonth[monthKey] = { monthName: MONTH_NAMES[d.getMonth()], nights: 0, cost: 0 };
+            byMonth[monthKey] = {
+                monthName: MONTH_NAMES[d.getMonth()],
+                nights: 0,
+                cost: 0,
+                currentCost: 0
+            };
         }
         byMonth[monthKey].nights++;
-        byMonth[monthKey].cost += nightly;
+        byMonth[monthKey].cost += estNightly;
+        byMonth[monthKey].currentCost += curNightly;
     }
 
-    const monthBreakdown = Object.keys(byMonth).sort().map(k => byMonth[k]);
-    return { totalCost, monthBreakdown };
+    const hasRateDiff = totalCost !== currentTotalCost;
+    const monthBreakdown = Object.keys(byMonth).sort().map(k => {
+        const m = byMonth[k];
+        return {
+            monthKey: k,
+            monthName: m.monthName,
+            nights: m.nights,
+            cost: m.cost,
+            currentCost: m.currentCost,
+            hasDiff: m.cost !== m.currentCost
+        };
+    });
+
+    return { totalCost, currentTotalCost, hasRateDiff, monthBreakdown };
 }
 
 /**
@@ -368,7 +394,7 @@ function calculateReservationCost(dates, roomType) {
  * Produces separate "Added", "Changed", and "Removed" sections.
  * Format examples:
  *   Noticed 4-17-26: Room #2603 > 0111111-001 4 nights from 5th $330
- *   Noticed 4-17-26: Room #2604 > 0110859-001 7 nights from 29th, 2 in April $470, 5 in May $345
+ *   Noticed 4-17-26: Room #2604 > 0110859-001 7 nights from 29th, 2 in April $470 (cur: $470), 5 in May $270 (cur: $345)
  *   Noticed 4-17-26: Both Rooms > 0112345-001 5 nights from 10th $670 [Two Bedroom Suite]
  *   Noticed 10-31-26: October 2026 Room #2604 > 0111215-001 4 nights from 31st, 1 in October $255, 3 in November $395 (was: 5 nights from 30th, 2 in October $255, 3 in November $395)
  */
@@ -406,7 +432,7 @@ function buildReservationCostSummary(output, detailsMap, noticedDateStr, changed
             roomLabel = `Room #${res.room}`;
         }
 
-        const costInfo = calculateReservationCost(res.dates, roomType);
+        const costInfo = calculateReservationCost(res.dates, roomType, res.resNumber);
         if (!costInfo) return null;
 
         const dayStr = `${startDay}${ordinalSuffix(startDay)}`;
@@ -415,12 +441,23 @@ function buildReservationCostSummary(output, detailsMap, noticedDateStr, changed
         let line = `Noticed ${noticedFormatted}: ${startMonth} ${roomLabel} > ${res.resNumber} ${totalNights} night${totalNights !== 1 ? 's' : ''} from ${dayStr}`;
 
         if (costInfo.monthBreakdown.length === 1) {
-            const perNight = Math.round(costInfo.totalCost / totalNights);
-            line += ` $${perNight.toLocaleString()}`;
+            const m = costInfo.monthBreakdown[0];
+            const perNight = Math.round(m.cost / totalNights);
+            if (costInfo.hasRateDiff) {
+                const curPerNight = Math.round(m.currentCost / totalNights);
+                line += ` $${perNight.toLocaleString()} (cur: $${curPerNight.toLocaleString()})`;
+            } else {
+                line += ` $${perNight.toLocaleString()}`;
+            }
         } else {
             const parts = costInfo.monthBreakdown.map(m => {
                 const perNight = Math.round(m.cost / m.nights);
-                return `${m.nights} in ${m.monthName} $${perNight.toLocaleString()}`;
+                if (costInfo.hasRateDiff) {
+                    const curPerNight = Math.round(m.currentCost / m.nights);
+                    return `${m.nights} in ${m.monthName} $${perNight.toLocaleString()} (cur: $${curPerNight.toLocaleString()})`;
+                } else {
+                    return `${m.nights} in ${m.monthName} $${perNight.toLocaleString()}`;
+                }
             });
             line += `, ${parts.join(', ')}`;
         }
@@ -440,17 +477,28 @@ function buildReservationCostSummary(output, detailsMap, noticedDateStr, changed
         const dayStr = `${startDay}${ordinalSuffix(startDay)}`;
 
         let roomType = res.room === 'both' ? 'Two Bedroom Suite' : ROOM_TYPE[res.room];
-        const costInfo = calculateReservationCost(res.dates, roomType);
+        const costInfo = calculateReservationCost(res.dates, roomType, res.resNumber);
 
         let costPart = '';
         if (costInfo) {
             if (costInfo.monthBreakdown.length === 1) {
-                const perNight = Math.round(costInfo.totalCost / totalNights);
-                costPart = ` $${perNight.toLocaleString()}`;
+                const m = costInfo.monthBreakdown[0];
+                const perNight = Math.round(m.cost / totalNights);
+                if (costInfo.hasRateDiff) {
+                    const curPerNight = Math.round(m.currentCost / totalNights);
+                    costPart = ` $${perNight.toLocaleString()} (cur: $${curPerNight.toLocaleString()})`;
+                } else {
+                    costPart = ` $${perNight.toLocaleString()}`;
+                }
             } else {
                 const parts = costInfo.monthBreakdown.map(m => {
                     const perNight = Math.round(m.cost / m.nights);
-                    return `${m.nights} in ${m.monthName} $${perNight.toLocaleString()}`;
+                    if (costInfo.hasRateDiff) {
+                        const curPerNight = Math.round(m.currentCost / m.nights);
+                        return `${m.nights} in ${m.monthName} $${perNight.toLocaleString()} (cur: $${curPerNight.toLocaleString()})`;
+                    } else {
+                        return `${m.nights} in ${m.monthName} $${perNight.toLocaleString()}`;
+                    }
                 });
                 costPart = `, ${parts.join(', ')}`;
             }
