@@ -81,11 +81,10 @@ async function scrapeCurrentMonth(page) {
             if (!weekEl) return;
             const wsClass = Array.from(weekEl.classList).find(c => /^ws\d{4}-\d{2}-\d{2}$/.test(c));
             if (!wsClass) return;
-            const weekStart = new Date(wsClass.substring(2) + 'T12:00:00');
+            const [y, m, d] = wsClass.substring(2).split('-').map(Number);
 
-            // Calculate actual date: week start + offset days
-            const eventDate = new Date(weekStart);
-            eventDate.setDate(eventDate.getDate() + offset);
+            // Calculate actual date using UTC math to avoid timezone or DST shift: week start + offset days
+            const eventDate = new Date(Date.UTC(y, m - 1, d + offset));
             const dateStr = eventDate.toISOString().split('T')[0];
 
             if (text.includes('>')) {

@@ -69,7 +69,7 @@ async function getMonthLabel(page) {
     });
 }
 
-async function waitForCalendarRender(page, previousMonthLabel = null, timeout = 30000, apiReady = null) {
+async function waitForCalendarRender(page, previousMonthLabel = null, timeout = 30000, apiReady = null, minExpectedEvents = 0) {
     const start = Date.now();
     // Wait for calendar day cells to be present
     await page.waitForSelector('.cv-day', { timeout });
@@ -93,15 +93,23 @@ async function waitForCalendarRender(page, previousMonthLabel = null, timeout = 
             await page.waitForTimeout(500);
         }
     }
+    // If we expect events to exist for this month, actively wait for them to render into the DOM
+    if (minExpectedEvents > 0) {
+        try {
+            await page.waitForSelector('.cv-event', { timeout: 10000 });
+        } catch {
+            console.warn(`  ⚠ Timed out waiting for .cv-event selector (expected >= ${minExpectedEvents})`);
+        }
+    }
     // Brief buffer for JS to render the API response data into DOM elements
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(2500);
 }
 
-async function navigateToNextMonth(page, previousMonthLabel, retries = 3, apiReady = null) {
+async function navigateToNextMonth(page, previousMonthLabel, retries = 3, apiReady = null, minExpectedEvents = 0) {
     for (let attempt = 1; attempt <= retries; attempt++) {
         try {
             await page.click('button.nextPeriod');
-            await waitForCalendarRender(page, previousMonthLabel, 30000, apiReady);
+            await waitForCalendarRender(page, previousMonthLabel, 30000, apiReady, minExpectedEvents);
             return;
         } catch (err) {
             console.warn(`  ⚠ Month navigation attempt ${attempt}/${retries} failed: ${err.message}`);
@@ -161,11 +169,10 @@ async function scrapeCurrentMonth(page) {
             if (!weekEl) return;
             const wsClass = Array.from(weekEl.classList).find(c => /^ws\d{4}-\d{2}-\d{2}$/.test(c));
             if (!wsClass) return;
-            const weekStart = new Date(wsClass.substring(2) + 'T12:00:00');
+            const [y, m, d] = wsClass.substring(2).split('-').map(Number);
 
-            // Calculate actual date: week start + offset days
-            const eventDate = new Date(weekStart);
-            eventDate.setDate(eventDate.getDate() + offset);
+            // Calculate actual date using UTC math to avoid timezone or DST shift: week start + offset days
+            const eventDate = new Date(Date.UTC(y, m - 1, d + offset));
             const dateStr = eventDate.toISOString().split('T')[0];
 
             if (text.includes('>')) {
@@ -201,6 +208,21 @@ function parseMonthLabel(label) {
     const match = label.match(/(\w+)\s+(\d{4})/);
     if (!match) return null;
     return { month: months[match[1]], year: parseInt(match[2]) };
+}
+
+function countMonthReservations(availabilityData, year, month) {
+    if (!availabilityData || !availabilityData.rooms) return 0;
+    const prefix = `${year}-${String(month).padStart(2, '0')}`;
+    let count = 0;
+    for (const room of ROOMS) {
+        const roomData = availabilityData.rooms[room] || {};
+        for (const [date, status] of Object.entries(roomData)) {
+            if (date.startsWith(prefix) && status === 'reserved') {
+                count++;
+            }
+        }
+    }
+    return count;
 }
 
 // ============================
@@ -661,6 +683,15 @@ async function main() {
     const page = await (await browser.newContext()).newPage();
 
     try {
+        let oldData = null;
+        if (fs.existsSync(OUTPUT_PATH)) {
+            try {
+                oldData = JSON.parse(fs.readFileSync(OUTPUT_PATH, 'utf8'));
+            } catch (e) {
+                console.warn('Could not parse old availability data.');
+            }
+        }
+
         let apiFailedError = null;
         let apiResponseReceived = false;
 
@@ -685,10 +716,22 @@ async function main() {
         const apiReady = () => ({ received: apiResponseReceived, failed: !!apiFailedError });
 
         await login(page, email, password);
-        await page.goto(ADMIN_URL, { waitUntil: 'domcontentloaded', timeout: 45000 });
-        await waitForCalendarRender(page, null, 30000, apiReady);
+
+        // Reset API response tracker before waiting for the initial calendar render
+        apiFailedError = null;
+        apiResponseReceived = false;
+
+        // Only navigate if login didn't already bring us to /admin
+        if (!page.url().includes('/admin')) {
+            await page.goto(ADMIN_URL, { waitUntil: 'domcontentloaded', timeout: 45000 });
+        }
 
         const localDate = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Cancun' }); // YYYY-MM-DD
+        const [curYear, curMonth] = localDate.split('-').map(Number);
+        const initialExpectedEvents = countMonthReservations(oldData, curYear, curMonth);
+
+        await waitForCalendarRender(page, null, 30000, apiReady, initialExpectedEvents);
+
         const output = { lastUpdated: localDate, rooms: { '2603': {}, '2604': {} } };
         const detailsMap = { '2603': {}, '2604': {} };
 
@@ -707,6 +750,19 @@ async function main() {
                     }
 
                     const { monthLabel, data } = await scrapeCurrentMonth(page);
+
+                    const parsed = parseMonthLabel(monthLabel);
+                    if (parsed && oldData) {
+                        const oldMonthCount = countMonthReservations(oldData, parsed.year, parsed.month);
+                        const rsrv2603 = Object.values(data['2603'] || {}).filter(v => v && v.status === 'reserved').length;
+                        const rsrv2604 = Object.values(data['2604'] || {}).filter(v => v && v.status === 'reserved').length;
+                        const newMonthCount = rsrv2603 + rsrv2604;
+
+                        // If old data had substantial reservations but new scrape found 0, DOM has not finished rendering
+                        if (oldMonthCount >= 3 && newMonthCount === 0) {
+                            throw new Error(`Scraped 0 reservations for ${monthLabel}, but previously had ${oldMonthCount}. Calendar events likely still rendering.`);
+                        }
+                    }
 
                     monthResult = { monthLabel, data };
                     break;
@@ -744,31 +800,50 @@ async function main() {
             apiFailedError = null; // Reset for next month navigation
             apiResponseReceived = false; // Reset — need fresh API response for next month
             if (i < MONTHS_TO_SCRAPE - 1) {
-                await navigateToNextMonth(page, lastMonthLabel, 3, apiReady);
+                // Determine next month's expected reservation count
+                let nextExpectedEvents = 0;
+                if (parsed && oldData) {
+                    let nextY = parsed.year;
+                    let nextM = parsed.month + 1;
+                    if (nextM > 12) { nextM = 1; nextY++; }
+                    nextExpectedEvents = countMonthReservations(oldData, nextY, nextM);
+                }
+                await navigateToNextMonth(page, lastMonthLabel, 3, apiReady, nextExpectedEvents);
             }
         }
 
-        let oldData = null;
-        if (fs.existsSync(OUTPUT_PATH)) {
-            try {
-                oldData = JSON.parse(fs.readFileSync(OUTPUT_PATH, 'utf8'));
-            } catch (e) {
-                console.warn('Could not parse old availability data.');
-            }
-        }
-
-        // --- Sanity check: detect if scrape returned suspiciously few reservations ---
-        const newReservedCount = ROOMS.reduce((sum, room) =>
-            sum + Object.values(output.rooms[room]).filter(v => v === 'reserved').length, 0);
+        // --- Sanity checks: detect if scrape returned suspiciously few reservations ---
         if (oldData && oldData.rooms) {
+            // Check 1: Per-month sanity check
+            for (const [roomKey, roomData] of Object.entries(output.rooms)) {
+                const monthsInOutput = new Set(Object.keys(roomData).map(d => d.substring(0, 7)));
+                for (const ym of monthsInOutput) {
+                    const [y, m] = ym.split('-').map(Number);
+                    const oldMCount = countMonthReservations(oldData, y, m);
+                    const newMCount = countMonthReservations(output, y, m);
+                    if (oldMCount >= 5 && newMCount < oldMCount * 0.5) {
+                        throw new Error(
+                            `Sanity check failed for ${ym}: reservations dropped from ${oldMCount} to ${newMCount} ` +
+                            `(${Math.round((1 - newMCount / oldMCount) * 100)}% drop). ` +
+                            `This indicates a scraping issue — aborting to protect data.`
+                        );
+                    }
+                }
+                break; // only need to check once since countMonthReservations checks both rooms
+            }
+
+            // Check 2: Global sanity check (abort if drop is >15 reservations or >20% of total)
             const oldReservedCount = ROOMS.reduce((sum, room) =>
                 sum + Object.values(oldData.rooms[room] || {}).filter(v => v === 'reserved').length, 0);
+            const newReservedCount = ROOMS.reduce((sum, room) =>
+                sum + Object.values(output.rooms[room] || {}).filter(v => v === 'reserved').length, 0);
             console.log(`\nReservation sanity check: old=${oldReservedCount}, new=${newReservedCount}`);
-            if (oldReservedCount > 10 && newReservedCount < oldReservedCount * 0.5) {
+            const drop = oldReservedCount - newReservedCount;
+            if (oldReservedCount > 20 && (drop > 15 || newReservedCount < oldReservedCount * 0.8)) {
                 throw new Error(
-                    `Sanity check failed: reservations dropped from ${oldReservedCount} to ${newReservedCount} ` +
-                    `(${Math.round((1 - newReservedCount / oldReservedCount) * 100)}% drop). ` +
-                    `This likely indicates a scraping issue — aborting to protect data.`
+                    `Sanity check failed: total reservations dropped from ${oldReservedCount} to ${newReservedCount} ` +
+                    `(${drop} reservations lost, ${Math.round((drop / oldReservedCount) * 100)}% drop). ` +
+                    `This indicates a scraping issue — aborting to protect data.`
                 );
             }
         }
