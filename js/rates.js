@@ -185,13 +185,13 @@ const RATE_SCHEDULES = [
     {
         id: '2026_spring',
         name: 'Jan 30 – May 19, 2026 (Initial Rates)',
-        maxResNumber: 110949,
+        maxResNumber: 111730,
         getNightlyRate: getNightlyRateEra1
     },
     {
         id: '2026_summer',
         name: 'May 20 – Sep 2, 2026 (Summer Yield Updates)',
-        maxResNumber: 111115,
+        maxResNumber: 114535,
         getNightlyRate: getNightlyRateEra2
     },
     {
